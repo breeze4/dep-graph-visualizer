@@ -63,6 +63,16 @@ dep-graph-visualizer/
 - Separate apps (diverse library collections with behavior) from libs (small related code groups)
 - Track 3rd party dependencies for each app/lib
 
+### Graph representation
+This data structure is a **Dependency Graph** represented as a JSON object.
+
+-   The top-level keys are **strings**, each representing the unique relative path to a file (a **node** in the graph).
+-   Each file node has a value which is an object containing two properties:
+    -   `imports`: An array of strings, where each string is a path to a file that the current file *depends on* (outgoing edges).
+    -   `importedBy`: An array of strings, where each string is a path to a file that *depends on* the current file (incoming edges).
+
+Essentially, it's an adjacency list representation of a directed graph that explicitly stores both forward and reverse edges for every node, allowing for efficient bi-directional traversal.
+
 ### Visualization Hierarchy
 - Top level: Show apps and libs separately
 - Apps display: size (code + test), 3P dependency count, libs used

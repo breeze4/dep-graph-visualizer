@@ -1,53 +1,41 @@
 # Dependency Graph Visualizer
 
-A web application for visualizing dependency graphs using vanilla JavaScript and Node.js.
+Visualizes JavaScript/TypeScript project dependencies as interactive graphs using D3.js.
 
-## Prerequisites
+## Overview
 
-- Node.js (v14 or higher)
-- npm (comes with Node.js)
+Analyzes internal dependencies in JS/TS repositories, separating apps and libs, and provides drill-down navigation from high-level modules to individual files.
 
-## Installation
+## Quick Start
 
-1. Clone the repository
-2. Navigate to the backend directory and install dependencies:
-   ```bash
-   cd backend
-   npm install
-   ```
-
-## Running the Application
-
-From the backend directory:
 ```bash
+# Install dependencies
+cd backend
+npm install
+
+# Start server
 npm start
+
+# Open browser
+http://localhost:3000
 ```
 
-The server will start on `http://localhost:3000` (or the port specified in the PORT environment variable).
+## Usage
 
-## Project Structure
-
-```
-dep-graph-visualizer/
-├── backend/          # Node.js server
-│   ├── package.json  # Backend dependencies
-│   └── server.js     # Express server
-├── frontend/         # Vanilla JS webapp
-│   ├── index.html    # Main HTML file
-│   ├── styles.css    # Styling
-│   └── script.js     # Frontend JavaScript
-├── docs/             # Documentation
-│   └── SPEC.md       # Project specification
-├── .gitignore        # Git ignore rules
-└── README.md         # This file
+```bash
+node graph-main.js "./example/example-app/src"
 ```
 
-## Development
+## Architecture
 
-- Frontend: Edit files in the `frontend/` directory
-- Backend: Modify `backend/server.js` for server changes
-- The server automatically serves static files from the frontend directory
+- **Backend**: Node.js + Express API server
+- **Frontend**: Vanilla JS + D3.js visualization
+- **No build system** - runs directly
 
-## License
+## Features
 
-MIT
+- Dependency graph mapping
+- Apps vs libs separation
+- Interactive drill-down navigation
+- Code size metrics
+- Dependency count visualization

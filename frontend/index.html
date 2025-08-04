@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dependency Graph Visualizer</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
     <header>
@@ -13,8 +14,10 @@
     
     <main>
         <div id="app">
-            <p>Welcome to the Dependency Graph Visualizer!</p>
-            <button id="demo-btn">Click Me</button>
+            <div id="controls">
+                <button id="loadData">Load Dependencies</button>
+            </div>
+            <div id="visualization"></div>
         </div>
     </main>
     
