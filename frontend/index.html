@@ -14,10 +14,154 @@
     
     <main>
         <div id="app">
-            <div id="controls">
-                <button id="loadData">Load Dependencies</button>
+            <!-- Upload Zone -->
+            <div id="upload-section" class="upload-zone">
+                <div id="drop-zone" class="drop-zone">
+                    <div class="drop-zone-content">
+                        <div class="upload-icon">📁</div>
+                        <h3>Drop your dependency graph JSON file here</h3>
+                        <p>or <button id="browse-btn" class="browse-button">click to browse</button></p>
+                        <input type="file" id="file-input" accept=".json" style="display: none;">
+                        <div class="supported-format">Supports: dependency-graph.json</div>
+                    </div>
+                </div>
+                
+                <!-- Loading and Error Messages -->
+                <div id="loading-message" class="message loading-message" style="display: none;">
+                    <div class="spinner"></div>
+                    <div class="loading-content">
+                        <span id="loading-text">Processing file...</span>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div id="progress-fill" class="progress-fill"></div>
+                            </div>
+                            <span id="progress-text">0%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="error-message" class="message error-message" style="display: none;">
+                    <div class="error-icon">⚠️</div>
+                    <div class="error-content">
+                        <strong>Error:</strong>
+                        <span id="error-text"></span>
+                    </div>
+                </div>
+                
+                <div id="success-message" class="message success-message" style="display: none;">
+                    <div class="success-icon">✅</div>
+                    <span id="success-text">File loaded successfully!</span>
+                </div>
             </div>
-            <div id="visualization"></div>
+
+            <!-- Main Layout (hidden until file loaded) -->
+            <div id="main-layout" style="display: none;">
+                <!-- Controls Panel -->
+                <div id="controls-panel" class="controls-panel">
+                    <h3>Controls</h3>
+                    <button id="reset-graph">Reset View</button>
+                    <button id="new-file">Load New File</button>
+                    
+                    <h4>Display Options</h4>
+                    <div class="control-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="toggle-labels" checked>
+                            Show Labels
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-apps" checked>
+                            Show Apps
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-libs" checked>
+                            Show Libs
+                        </label>
+                    </div>
+                    
+                    <h4>Filters</h4>
+                    <div class="control-group">
+                        <label class="slider-label">
+                            Min Lines of Code
+                            <input type="range" id="min-loc" min="0" max="100" step="5" value="0">
+                            <span id="loc-value">0</span>
+                        </label>
+                        
+                        <label class="input-label">
+                            Search Files
+                            <input type="text" id="search-input" placeholder="Search by filename...">
+                        </label>
+                        
+                        <button id="reset-filters">Reset Filters</button>
+                    </div>
+                </div>
+
+                <!-- Graph Visualization -->
+                <div id="graph-container" class="graph-container">
+                    <div id="visualization" class="visualization"></div>
+                </div>
+
+                <!-- File Details Panel -->
+                <div id="file-details-panel" class="file-details-panel">
+                    <h3>Selected File</h3>
+                    <div id="file-info" class="file-info">
+                        <p>Select a node to view details</p>
+                    </div>
+                </div>
+
+                <!-- Most Imported Panel -->
+                <div id="most-imported-panel" class="collapsible-panel">
+                    <div class="panel-header">
+                        <h3>Most Imported</h3>
+                        <button class="collapse-btn" id="collapse-imported">−</button>
+                    </div>
+                    <div class="panel-content" id="imported-content">
+                        <ul id="most-imported" class="top-list"></ul>
+                    </div>
+                </div>
+
+                <!-- Most Exports Panel -->
+                <div id="most-exports-panel" class="collapsible-panel">
+                    <div class="panel-header">
+                        <h3>Most Exports</h3>
+                        <button class="collapse-btn" id="collapse-exports">−</button>
+                    </div>
+                    <div class="panel-content" id="exports-content">
+                        <ul id="most-exports" class="top-list"></ul>
+                    </div>
+                </div>
+
+                <!-- Statistics Panel -->
+                <div id="stats-panel" class="stats-panel">
+                    <h3>Graph Statistics</h3>
+                    <div id="graph-stats" class="graph-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Total Files:</span>
+                            <span id="total-files">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Apps:</span>
+                            <span id="total-apps">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Libs:</span>
+                            <span id="total-libs">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Dependencies:</span>
+                            <span id="total-edges">-</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Visible:</span>
+                            <span id="visible-nodes">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="top-section">
+                        <h4>Largest Files</h4>
+                        <ul id="largest-files" class="top-list"></ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
     

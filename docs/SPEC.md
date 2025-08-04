@@ -92,6 +92,106 @@ Essentially, it's an adjacency list representation of a directed graph that expl
 - Execute via: `node graph-main.js "./example/example-app/src"`
 - Automatically identify and separate apps and libs from the source path
 
+## Frontend D3 Graph Visualization Specification
+
+### Overview
+Interactive web application for visualizing JavaScript/TypeScript project dependency graphs using D3.js with drag-and-drop JSON file upload.
+
+### Core Features
+
+#### 1. File Upload Interface
+- **Drag & Drop Zone**: Large, prominent area for JSON file upload
+- **File Validation**: Parse and validate JSON structure against expected schema
+- **Error Handling**: Clear error messages for invalid files or malformed JSON
+- **Visual Feedback**: Loading states and success/error indicators
+
+#### 2. Graph Visualization (D3.js Force Layout)
+- **Node Representation**: 
+  - Circles for files, sized by lines of code
+  - Color coding: Apps (blue), Libs (green)
+  - Node labels showing file names (truncated if needed)
+- **Edge Representation**:
+  - Arrows showing import direction (A imports B)
+  - Edge thickness based on dependency strength
+- **Interactive Elements**:
+  - Pan and zoom capability
+  - Node dragging
+  - Hover tooltips with detailed info
+
+#### 3. Information Panel
+- **File Details**: Selected node shows:
+  - Full file path
+  - Lines of code
+  - Import count (outgoing dependencies)
+  - ImportedBy count (incoming dependencies)
+  - File type (app/lib)
+- **Graph Statistics**:
+  - Total files, apps, libs
+  - Most connected nodes
+  - Largest files
+
+#### 4. Controls & Filters
+- **Layout Controls**:
+  - Force simulation strength adjustment
+  - Reset zoom/position
+  - Toggle node labels on/off
+- **Filtering**:
+  - Show/hide apps vs libs
+  - Filter by file size threshold
+  - Search/highlight specific files
+
+#### 5. Visual Design
+- **Responsive Layout**: Works on desktop and tablet
+- **Clean UI**: Minimal interface focusing on the graph
+- **Accessibility**: Keyboard navigation, screen reader support
+- **Performance**: Smooth rendering for graphs with 50+ nodes
+
+### Technical Implementation
+
+#### Data Structure Expected
+```json
+{
+  "metadata": {
+    "generatedAt": "ISO timestamp",
+    "projectRoot": "path",
+    "stats": { "totalFiles": 0, "codeFiles": 0, "testFiles": 0 }
+  },
+  "graph": {
+    "file/path.ts": {
+      "imports": ["other/file.ts"],
+      "importedBy": ["dependent/file.ts"],
+      "linesOfCode": 50,
+      "isTest": false
+    }
+  }
+}
+```
+
+#### D3 Components
+- **Force Simulation**: `d3.forceSimulation()` with collision detection
+- **SVG Rendering**: Scalable graphics with zoom/pan transforms
+- **Event Handling**: Mouse/touch interactions for node manipulation
+
+#### Validation Logic
+- Check JSON structure matches expected schema
+- Verify all imported files exist in the graph
+- Validate numeric fields (linesOfCode > 0)
+- Ensure bidirectional consistency (A imports B ↔ B importedBy A)
+
+### User Flow
+1. **Landing**: User sees upload zone and instructions
+2. **Upload**: Drag JSON file or click to browse
+3. **Validation**: File is parsed and validated with feedback as its loading
+4. **Visualization**: Graph renders with default layout
+5. **Interaction**: User explores nodes, views details, adjusts layout
+6. **Analysis**: User gains insights from dependency patterns
+
+### Error States
+- **Invalid JSON**: Show parsing error with line number
+- **Wrong Schema**: Highlight missing/incorrect fields
+- **Empty Graph**: Handle edge case of no dependencies
+- **Large Files**: Performance warnings for 100+ node graphs
+
 ### Future features:
 * External modules graph, put together a list of all external package imports/dependencies
 
