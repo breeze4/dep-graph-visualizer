@@ -1,0 +1,104 @@
+{
+  "metadata": {
+    "generatedAt": "2025-08-04T03:16:53.417Z",
+    "projectRoot": "/mnt/d/dev/_ws/dep-graph-visualizer/example/example-app/src",
+    "stats": {
+      "totalFiles": 11,
+      "codeFiles": 8,
+      "testFiles": 3,
+      "totalCodeLines": 219,
+      "totalTestLines": 65
+    }
+  },
+  "graph": {
+    "apps/dashboard/index.ts": {
+      "imports": [
+        "libs/api.ts",
+        "libs/utils.ts",
+        "libs/logger.ts"
+      ],
+      "importedBy": [
+        "apps/main.ts"
+      ],
+      "linesOfCode": 43,
+      "isTest": false
+    },
+    "apps/main.ts": {
+      "imports": [
+        "apps/style.css",
+        "typescript.svg",
+        "libs/counter.ts",
+        "apps/dashboard/index.ts",
+        "apps/user-profile/profile.ts"
+      ],
+      "importedBy": [],
+      "linesOfCode": 27,
+      "isTest": false
+    },
+    "apps/user-profile/profile.ts": {
+      "imports": [
+        "libs/api.ts",
+        "libs/validators.ts",
+        "libs/logger.ts"
+      ],
+      "importedBy": [
+        "apps/main.ts"
+      ],
+      "linesOfCode": 54,
+      "isTest": false
+    },
+    "libs/api.ts": {
+      "imports": [
+        "libs/logger.ts"
+      ],
+      "importedBy": [
+        "apps/dashboard/index.ts",
+        "apps/user-profile/profile.ts"
+      ],
+      "linesOfCode": 28,
+      "isTest": false
+    },
+    "libs/counter.ts": {
+      "imports": [
+        "libs/utils.ts",
+        "libs/logger.ts"
+      ],
+      "importedBy": [
+        "apps/main.ts"
+      ],
+      "linesOfCode": 14,
+      "isTest": false
+    },
+    "libs/logger.ts": {
+      "imports": [],
+      "importedBy": [
+        "apps/dashboard/index.ts",
+        "apps/user-profile/profile.ts",
+        "libs/api.ts",
+        "libs/counter.ts"
+      ],
+      "linesOfCode": 23,
+      "isTest": false
+    },
+    "libs/utils.ts": {
+      "imports": [],
+      "importedBy": [
+        "apps/dashboard/index.ts",
+        "libs/counter.ts",
+        "libs/validators.ts"
+      ],
+      "linesOfCode": 13,
+      "isTest": false
+    },
+    "libs/validators.ts": {
+      "imports": [
+        "libs/utils.ts"
+      ],
+      "importedBy": [
+        "apps/user-profile/profile.ts"
+      ],
+      "linesOfCode": 17,
+      "isTest": false
+    }
+  }
+}

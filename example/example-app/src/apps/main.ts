@@ -2,6 +2,8 @@ import './style.css'
 import typescriptLogo from '../typescript.svg'
 import viteLogo from '/vite.svg'
 import { setupCounter } from '../libs/counter.ts'
+import dashboard from './dashboard/index.ts'
+import { createProfile } from './user-profile/profile.ts'
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div>
