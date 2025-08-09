@@ -41,6 +41,34 @@ main {
     overflow: hidden;
 }
 
+/* Focus mode controls */
+.focus-controls {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e0e6ed;
+    text-align: center;
+}
+
+.focus-btn {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+.focus-btn:hover {
+    background: #2980b9;
+}
+
+.focus-btn:active {
+    transform: translateY(1px);
+}
+
 /* Upload Zone Styles */
 .upload-zone {
     padding: 3rem;

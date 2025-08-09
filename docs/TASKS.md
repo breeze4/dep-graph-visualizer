@@ -75,13 +75,13 @@
 - [x] 7.5 Add node labels showing module names
 
 ### 8. Graph Visualization - Interactions
-- [ ] 8.1 Implement zoom and pan controls using d3.zoom()
-- [ ] 8.2 Add node click handling for selection
-- [ ] 8.3 Add node hover tooltips showing basic stats
-- [ ] 8.4 Add edge hover tooltips showing import details
-- [ ] 8.5 Implement focus mode that shows node + immediate neighbors only
-- [ ] 8.6 Add smooth transitions for all graph interactions
-- [ ] 8.7 Implement collision detection to prevent node overlap
+- [x] 8.1 Implement zoom and pan controls using d3.zoom()
+- [x] 8.2 Add node click handling for selection
+- [x] 8.3 Add node hover tooltips showing basic stats
+- [x] 8.4 Add edge hover tooltips showing import details
+- [x] 8.5 Implement focus mode that shows node + immediate neighbors only
+- [x] 8.6 Add smooth transitions for all graph interactions
+- [x] 8.7 Implement collision detection to prevent node overlap
 
 ### 9. UI Components - Information Panels
 - [ ] 9.1 Connect node selection to existing file details panel

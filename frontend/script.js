@@ -1065,6 +1065,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    let focusMode = false;
+    let focusedNode = null;
+
     function selectNode(nodeData) {
         // Update info panel with node details
         const fileInfo = document.getElementById('file-info');
@@ -1089,29 +1092,137 @@ document.addEventListener('DOMContentLoaded', function() {
                     ${nodeData.importedBy.map(imp => `<li>${imp}</li>`).join('')}
                 </ul>
             </div>
+            
+            <div class="focus-controls">
+                <button class="focus-btn" onclick="toggleFocusMode('${nodeData.id}')">
+                    ${focusMode && focusedNode === nodeData.id ? 'Exit Focus' : 'Focus Mode'}
+                </button>
+            </div>
         `;
         
-        // Highlight selected node
+        // Highlight selected node with smooth transitions
         g.selectAll('.node circle')
+            .transition()
+            .duration(300)
+            .ease(d3.easeQuadOut)
             .attr('stroke', '#fff')
             .attr('stroke-width', 2);
         
         g.selectAll('.node')
             .filter(d => d.id === nodeData.id)
             .select('circle')
+            .transition()
+            .duration(300)
+            .ease(d3.easeQuadOut)
             .attr('stroke', '#e74c3c')
             .attr('stroke-width', 4);
     }
     
+    function toggleFocusMode(nodeId) {
+        if (focusMode && focusedNode === nodeId) {
+            // Exit focus mode
+            exitFocusMode();
+        } else {
+            // Enter focus mode
+            enterFocusMode(nodeId);
+        }
+    }
+    
+    function enterFocusMode(nodeId) {
+        focusMode = true;
+        focusedNode = nodeId;
+        
+        const node = nodes.find(n => n.id === nodeId);
+        if (!node) return;
+        
+        // Get connected node IDs
+        const connectedNodeIds = new Set([nodeId]);
+        node.imports.forEach(id => connectedNodeIds.add(id));
+        node.importedBy.forEach(id => connectedNodeIds.add(id));
+        
+        // Smooth transition for hiding non-connected nodes
+        g.selectAll('.node')
+            .transition()
+            .duration(500)
+            .ease(d3.easeQuadInOut)
+            .style('opacity', d => connectedNodeIds.has(d.id) ? 1 : 0.1)
+            .on('end', function(d) {
+                // Disable pointer events after transition
+                d3.select(this).style('pointer-events', connectedNodeIds.has(d.id) ? 'all' : 'none');
+            });
+        
+        // Smooth transition for hiding non-connected edges
+        g.selectAll('.link')
+            .transition()
+            .duration(500)
+            .ease(d3.easeQuadInOut)
+            .style('opacity', d => connectedNodeIds.has(d.source.id) && connectedNodeIds.has(d.target.id) ? 0.7 : 0.05)
+            .on('end', function(d) {
+                // Disable pointer events after transition
+                const isConnected = connectedNodeIds.has(d.source.id) && connectedNodeIds.has(d.target.id);
+                d3.select(this).style('pointer-events', isConnected ? 'all' : 'none');
+            });
+        
+        // Update info panel
+        const selectedNode = nodes.find(n => n.id === nodeId);
+        if (selectedNode) {
+            selectNode(selectedNode);
+        }
+    }
+    
+    function exitFocusMode() {
+        const oldFocusedNode = focusedNode;
+        focusMode = false;
+        focusedNode = null;
+        
+        // Smooth transition for showing all nodes and edges
+        g.selectAll('.node')
+            .transition()
+            .duration(500)
+            .ease(d3.easeQuadInOut)
+            .style('opacity', 1)
+            .on('end', function() {
+                d3.select(this).style('pointer-events', 'all');
+            });
+        
+        g.selectAll('.link')
+            .transition()
+            .duration(500)
+            .ease(d3.easeQuadInOut)
+            .style('opacity', 0.7)
+            .on('end', function() {
+                d3.select(this).style('pointer-events', 'all');
+            });
+        
+        // Update info panel
+        if (oldFocusedNode) {
+            const selectedNode = nodes.find(n => n.id === oldFocusedNode);
+            if (selectedNode) {
+                selectNode(selectedNode);
+            }
+        }
+    }
+    
+    // Make functions globally available for button onclick
+    window.toggleFocusMode = toggleFocusMode;
+    
     function resetGraphView() {
+        // Exit focus mode if active
+        if (focusMode) {
+            exitFocusMode();
+        }
+        
         if (svg && zoom) {
             svg.transition()
                 .duration(750)
                 .call(zoom.transform, d3.zoomIdentity);
         }
         
-        // Clear selection
+        // Clear selection with smooth transition
         g.selectAll('.node circle')
+            .transition()
+            .duration(300)
+            .ease(d3.easeQuadOut)
             .attr('stroke', '#fff')
             .attr('stroke-width', 2);
         
