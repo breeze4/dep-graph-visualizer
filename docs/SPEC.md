@@ -22,19 +22,25 @@ During development:
 
 ## **2. Architecture**
 
+### **CLI Tool (Node.js)**
+
+* Command-line tool for generating dependency graphs: `node graph-main.js <app-dir> <libs-dir>`
+* Takes two parameters:
+  * First parameter: root directory of the app to analyze (e.g., `./example/example-app/src/apps`)
+  * Second parameter: directory containing libraries (e.g., `./example/example-app/src/libs`)
+* Uses **ts-morph** to parse TypeScript files and extract imports
+* Outputs JSON graph data to `frontend/dependency-graph.json`
+* Supports configuration via command-line flags for:
+  * Output path
+  * Include/exclude test files
+  * Module boundary detection strategy
+
 ### **Backend (Node.js + Express)**
 
-* Serves static frontend files.
-* Provides an API to:
-
-  * Generate dependency graphs from a local codebase.
-  * Return JSON graph data for visualization.
-* Uses **TypeScript compiler API** or **ts-morph** to parse `.ts` files and extract imports.
-* Configurable port (default `3000`).
-* Can run in:
-
-  * **Static mode** – serves pre-generated JSON graphs.
-  * **Live analysis mode** – scans the codebase on request.
+* Simple static file server
+* Serves frontend files from `./frontend`
+* No dynamic graph generation - uses pre-generated JSON from CLI tool
+* Configurable port (default `3000`)
 
 ### **Frontend (Vanilla JS + D3.js)**
 
@@ -102,29 +108,40 @@ During development:
 
 ---
 
-## **4. Graph Generation Process**
+## **4. Graph Generation Process (CLI Tool)**
 
-1. **Codebase traversal**
+1. **Command execution**
+   * Run: `node graph-main.js <app-dir> <libs-dir>`
+   * Validate both directories exist
+   * Initialize ts-morph project with TypeScript configuration
 
-   * Scan specific app directory within `apps/` and the entire `libs/` directories recursively.
-   * Group files into **modules** by directory/package.json or Angular NgModule boundary.
+2. **Codebase traversal**
 
-2. **Dependency extraction**
+   * Scan the specified app directory recursively
+   * Scan the entire libs directory recursively
+   * Group files into **modules** by directory boundaries
 
-   * Parse imports with `ts-morph`.
-   * Ignore test files (configurable).
-   * Map imports to absolute project paths.
-   * Aggregate identical `from→to` imports into a single edge with a count.
+3. **Dependency extraction**
 
-3. **Stats collection**
+   * Parse imports with `ts-morph`
+   * Ignore test files (`.test.ts`, `.spec.ts`, etc.)
+   * Resolve relative imports to absolute module paths
+   * Track both file-level and module-level dependencies
+   * Aggregate identical `from→to` imports into a single edge with a count
+   * Extract imported symbols for each edge
 
-   * Lines of code.
-   * Incoming/outgoing dependency counts.
-   * 3rd party package usage.
+4. **Stats collection**
 
-4. **Output**
+   * Lines of code per file and module
+   * Incoming/outgoing dependency counts
+   * File counts per module
+   * Module type detection (app/lib/external)
 
-   * Save to `.json` for visualization.
+5. **Output**
+
+   * Generate JSON matching the spec format
+   * Write to `frontend/dependency-graph.json` by default
+   * Display summary statistics to console
 
 ---
 
