@@ -21,12 +21,12 @@
 - [x] 0.6 Test that the tool runs from the new location
 
 ### 1. Graph Generation CLI Tool - Basic Setup
-- [ ] 1.1 Install ts-morph dependency for TypeScript parsing
-- [ ] 1.2 Update command-line parsing to accept two separate parameters (app-dir and libs-dir) instead of one
-- [ ] 1.3 Validate that both directories exist and are accessible
-- [ ] 1.4 Change output path from source directory to frontend/dependency-graph.json
-- [ ] 1.5 Remove requirement for apps/libs subdirectories within single directory
-- [ ] 1.6 Add progress indicators during file processing
+- [x] 1.1 Install ts-morph dependency for TypeScript parsing
+- [x] 1.2 Update command-line parsing to accept two separate parameters (app-dir and libs-dir) instead of one
+- [x] 1.3 Validate that both directories exist and are accessible
+- [x] 1.4 Change output path from source directory to frontend/dependency-graph.json
+- [x] 1.5 Remove requirement for apps/libs subdirectories within single directory
+- [x] 1.6 Add progress indicators during file processing
 
 ### 2. Graph Generation CLI Tool - File Processing
 - [ ] 2.1 Initialize ts-morph project with TypeScript configuration from example app

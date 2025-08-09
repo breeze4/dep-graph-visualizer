@@ -6,29 +6,43 @@ const path = require('path');
 // Parse command line arguments
 const args = process.argv.slice(2);
 
-if (args.length === 0) {
-    console.error('Error: Please provide a directory path to analyze');
-    console.error('Usage: node graph-main.js <directory-path>');
+if (args.length < 2) {
+    console.error('Error: Please provide both app and libs directory paths');
+    console.error('Usage: node index.js <app-dir> <libs-dir>');
+    console.error('Example: node index.js ./example/example-app/src/apps ./example/example-app/src/libs');
     process.exit(1);
 }
 
-const targetDirectory = args[0];
-const absolutePath = path.resolve(targetDirectory);
+const appDirectory = args[0];
+const libsDirectory = args[1];
+const appPath = path.resolve(appDirectory);
+const libsPath = path.resolve(libsDirectory);
 
-// Validate directory exists
-if (!fs.existsSync(absolutePath)) {
-    console.error(`Error: Directory does not exist: ${absolutePath}`);
+// Validate directories exist
+if (!fs.existsSync(appPath)) {
+    console.error(`Error: App directory does not exist: ${appPath}`);
     process.exit(1);
 }
 
-if (!fs.statSync(absolutePath).isDirectory()) {
-    console.error(`Error: Path is not a directory: ${absolutePath}`);
+if (!fs.statSync(appPath).isDirectory()) {
+    console.error(`Error: App path is not a directory: ${appPath}`);
+    process.exit(1);
+}
+
+if (!fs.existsSync(libsPath)) {
+    console.error(`Error: Libs directory does not exist: ${libsPath}`);
+    process.exit(1);
+}
+
+if (!fs.statSync(libsPath).isDirectory()) {
+    console.error(`Error: Libs path is not a directory: ${libsPath}`);
     process.exit(1);
 }
 
 console.log('Dependency Graph Analyzer');
 console.log('========================');
-console.log(`Analyzing directory: ${absolutePath}`);
+console.log(`App directory:  ${appPath}`);
+console.log(`Libs directory: ${libsPath}`);
 console.log('');
 
 // Check if file is a JavaScript/TypeScript file
@@ -50,7 +64,7 @@ function isTestFile(filePath) {
 }
 
 // Recursively traverse directory and collect files
-function traverseDirectory(dirPath, baseDir = dirPath, files = []) {
+function traverseDirectory(dirPath, baseDir = dirPath, files = [], showProgress = true) {
     const items = fs.readdirSync(dirPath);
     
     for (const item of items) {
@@ -62,7 +76,7 @@ function traverseDirectory(dirPath, baseDir = dirPath, files = []) {
             if (['node_modules', '.git', 'dist', 'build', 'coverage', '.next'].includes(item)) {
                 continue;
             }
-            traverseDirectory(fullPath, baseDir, files);
+            traverseDirectory(fullPath, baseDir, files, false);
         } else if (stat.isFile() && isJsOrTsFile(fullPath)) {
             const relativePath = path.relative(baseDir, fullPath);
             files.push({
@@ -70,7 +84,15 @@ function traverseDirectory(dirPath, baseDir = dirPath, files = []) {
                 relativePath: relativePath,
                 isTest: isTestFile(fullPath)
             });
+            // Show progress dots during traversal
+            if (showProgress && files.length % 20 === 0) {
+                process.stdout.write('.');
+            }
         }
+    }
+    
+    if (showProgress && files.length > 0) {
+        process.stdout.write('\n');
     }
     
     return files;
@@ -164,11 +186,14 @@ function buildDependencyGraph(files, projectRoot) {
     
     // Parse imports and build graph
     let processedCount = 0;
+    const totalNonTestFiles = files.filter(f => !f.isTest).length;
     for (const file of files) {
         if (!file.isTest) {  // Only analyze non-test files for dependencies
             processedCount++;
-            if (processedCount % 10 === 0) {
-                console.log(`  Processing file ${processedCount}/${files.filter(f => !f.isTest).length}...`);
+            // Show progress every 10 files or at the end
+            if (processedCount % 10 === 0 || processedCount === totalNonTestFiles) {
+                const percentage = Math.round((processedCount / totalNonTestFiles) * 100);
+                console.log(`  Processing files: ${processedCount}/${totalNonTestFiles} (${percentage}%)...`);
             }
             
             const imports = parseImports(file.absolutePath, projectRoot);
@@ -189,32 +214,20 @@ function buildDependencyGraph(files, projectRoot) {
 }
 
 // Main analysis function
-function analyzeDirectory(dirPath) {
+function analyzeDirectories(appDir, libsDir) {
     console.log('Starting analysis...\n');
     
-    // Check for apps and libs directories
-    const appsDir = path.join(dirPath, 'apps');
-    const libsDir = path.join(dirPath, 'libs');
-    
-    if (!fs.existsSync(appsDir) || !fs.existsSync(libsDir)) {
-        console.error('Error: Both "apps" and "libs" directories must exist in the target directory');
-        console.error(`Expected structure:`);
-        console.error(`  ${dirPath}/`);
-        console.error(`    ├── apps/`);
-        console.error(`    └── libs/`);
-        process.exit(1);
-    }
-    
-    console.log('✓ Found apps and libs directories');
+    // Determine common base path for relative paths
+    const commonBase = path.dirname(path.commonBase ? path.commonBase([appDir, libsDir]) : appDir);
     
     // Traverse apps directory
-    console.log('\nTraversing apps directory...');
-    const appFiles = traverseDirectory(appsDir, dirPath);
-    console.log(`  Found ${appFiles.length} JS/TS files in apps`);
+    console.log('Traversing app directory...');
+    const appFiles = traverseDirectory(appDir, commonBase);
+    console.log(`  Found ${appFiles.length} JS/TS files in app`);
     
     // Traverse libs directory
     console.log('\nTraversing libs directory...');
-    const libFiles = traverseDirectory(libsDir, dirPath);
+    const libFiles = traverseDirectory(libsDir, commonBase);
     console.log(`  Found ${libFiles.length} JS/TS files in libs`);
     
     const allFiles = [...appFiles, ...libFiles];
@@ -222,7 +235,7 @@ function analyzeDirectory(dirPath) {
     
     // Build dependency graph
     console.log('\nBuilding dependency graph...');
-    const graph = buildDependencyGraph(allFiles, dirPath);
+    const graph = buildDependencyGraph(allFiles, commonBase);
     
     // Count lines of code
     console.log('\nCounting lines of code...');
@@ -241,12 +254,14 @@ function analyzeDirectory(dirPath) {
     console.log(`  Total code lines: ${totalCodeLines}`);
     console.log(`  Total test lines: ${totalTestLines}`);
     
-    // Generate output
-    const outputPath = path.join(dirPath, 'dependency-graph.json');
+    // Generate output - write to frontend directory
+    const outputPath = path.join(__dirname, '..', 'frontend', 'dependency-graph.json');
     const output = {
         metadata: {
             generatedAt: new Date().toISOString(),
-            projectRoot: dirPath,
+            projectRoot: commonBase,
+            appDirectory: appDir,
+            libsDirectory: libsDir,
             stats: {
                 totalFiles: allFiles.length,
                 codeFiles: allFiles.filter(f => !f.isTest).length,
@@ -265,4 +280,4 @@ function analyzeDirectory(dirPath) {
 }
 
 // Run the analysis
-analyzeDirectory(absolutePath);
+analyzeDirectories(appPath, libsPath);

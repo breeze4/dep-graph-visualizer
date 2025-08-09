@@ -1,7 +1,9 @@
 {
   "metadata": {
-    "generatedAt": "2025-08-04T03:45:16.436Z",
+    "generatedAt": "2025-08-09T16:56:47.240Z",
     "projectRoot": "/mnt/d/dev/_ws/dep-graph-visualizer/example/example-app/src",
+    "appDirectory": "/mnt/d/dev/_ws/dep-graph-visualizer/example/example-app/src/apps",
+    "libsDirectory": "/mnt/d/dev/_ws/dep-graph-visualizer/example/example-app/src/libs",
     "stats": {
       "totalFiles": 11,
       "codeFiles": 8,
