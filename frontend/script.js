@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Global variables
     let currentGraphData = null;
     let currentSimulation = null;
+    let graphDataCache = new Map(); // Cache for parsed graph data
     
     // DOM elements
     const dropZone = document.getElementById('drop-zone');
@@ -145,6 +146,22 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Generate cache key from file name, size, and last modified
+        const cacheKey = `${file.name}_${file.size}_${file.lastModified}`;
+        
+        // Check if we have this file cached
+        if (graphDataCache.has(cacheKey)) {
+            console.log('Using cached graph data for', file.name);
+            showLoading('Loading from cache...');
+            updateProgress(50);
+            
+            setTimeout(() => {
+                const cachedData = graphDataCache.get(cacheKey);
+                validateAndLoadGraph(cachedData, true); // true indicates cached data
+            }, 100);
+            return;
+        }
+        
         // Show loading state
         showLoading('Reading file...');
         updateProgress(10);
@@ -169,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Add delay to show validation step
                     setTimeout(() => {
-                        validateAndLoadGraph(jsonData);
+                        validateAndLoadGraph(jsonData, false, cacheKey);
                     }, 200);
                     
                 } catch (error) {
@@ -186,25 +203,30 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // JSON validation and graph loading
-    function validateAndLoadGraph(data) {
+    function validateAndLoadGraph(data, fromCache = false, cacheKey = null) {
         try {
-            updateProgress(70, 'Validating structure...');
-            
-            // Validate basic structure
-            if (!data || typeof data !== 'object') {
-                throw new Error('Invalid data structure');
+            if (fromCache) {
+                updateProgress(70, 'Loading from cache...');
+                updateProgress(95, 'Building visualization...');
+            } else {
+                updateProgress(70, 'Validating structure...');
+                
+                // Validate basic structure
+                if (!data || typeof data !== 'object') {
+                    throw new Error('Invalid data structure');
+                }
+                
+                if (!data.metadata || (!data.nodes && !data.graph)) {
+                    throw new Error('Missing required fields: metadata and nodes (or legacy graph)');
+                }
+                
+                // Validate metadata
+                if (!data.metadata.stats || typeof data.metadata.stats !== 'object') {
+                    throw new Error('Invalid metadata structure');
+                }
+                
+                updateProgress(80, 'Validating graph data...');
             }
-            
-            if (!data.metadata || (!data.nodes && !data.graph)) {
-                throw new Error('Missing required fields: metadata and nodes (or legacy graph)');
-            }
-            
-            // Validate metadata
-            if (!data.metadata.stats || typeof data.metadata.stats !== 'object') {
-                throw new Error('Invalid metadata structure');
-            }
-            
-            updateProgress(80, 'Validating graph data...');
             
             console.log('Data structure:', {
                 hasNodes: !!data.nodes,
@@ -216,58 +238,74 @@ document.addEventListener('DOMContentLoaded', function() {
             
             let nodeCount = 0;
             
-            // Handle new spec format (nodes/edges arrays) or legacy format (graph object)
-            if (data.nodes && data.edges) {
-                // New spec format validation
-                if (!Array.isArray(data.nodes)) {
-                    throw new Error('Nodes must be an array');
-                }
-                if (!Array.isArray(data.edges)) {
-                    throw new Error('Edges must be an array');
-                }
-                
-                nodeCount = data.nodes.length;
-                if (nodeCount === 0) {
-                    throw new Error('Graph is empty - no nodes found');
-                }
-                
-                // Validate each node
-                let validatedNodes = 0;
-                for (const node of data.nodes) {
-                    validateSpecNode(node);
-                    validatedNodes++;
-                    const nodeProgress = (validatedNodes / nodeCount) * 15;
-                    updateProgress(80 + nodeProgress, `Validating nodes... (${validatedNodes}/${nodeCount})`);
-                }
-            } else {
-                // Legacy format validation
-                const graph = data.graph;
-                if (!graph || typeof graph !== 'object') {
-                    throw new Error('Graph must be a non-null object');
-                }
-                
-                nodeCount = Object.keys(graph).length;
-                if (nodeCount === 0) {
-                    throw new Error('Graph is empty - no files found');
-                }
-                
-                let validatedNodes = 0;
-                for (const [filePath, nodeData] of Object.entries(graph)) {
-                    if (!nodeData) {
-                        throw new Error(`Node data for ${filePath} is null or undefined`);
+            if (!fromCache) {
+                // Handle new spec format (nodes/edges arrays) or legacy format (graph object)
+                if (data.nodes && data.edges) {
+                    // New spec format validation
+                    if (!Array.isArray(data.nodes)) {
+                        throw new Error('Nodes must be an array');
                     }
-                    validateLegacyNode(filePath, nodeData, graph);
-                    validatedNodes++;
-                    const nodeProgress = (validatedNodes / nodeCount) * 15;
-                    updateProgress(80 + nodeProgress, `Validating nodes... (${validatedNodes}/${nodeCount})`);
+                    if (!Array.isArray(data.edges)) {
+                        throw new Error('Edges must be an array');
+                    }
+                    
+                    nodeCount = data.nodes.length;
+                    if (nodeCount === 0) {
+                        throw new Error('Graph is empty - no nodes found');
+                    }
+                    
+                    // Validate each node
+                    let validatedNodes = 0;
+                    for (const node of data.nodes) {
+                        validateSpecNode(node);
+                        validatedNodes++;
+                        const nodeProgress = (validatedNodes / nodeCount) * 15;
+                        updateProgress(80 + nodeProgress, `Validating nodes... (${validatedNodes}/${nodeCount})`);
+                    }
+                } else {
+                    // Legacy format validation
+                    const graph = data.graph;
+                    if (!graph || typeof graph !== 'object') {
+                        throw new Error('Graph must be a non-null object');
+                    }
+                    
+                    nodeCount = Object.keys(graph).length;
+                    if (nodeCount === 0) {
+                        throw new Error('Graph is empty - no files found');
+                    }
+                    
+                    let validatedNodes = 0;
+                    for (const [filePath, nodeData] of Object.entries(graph)) {
+                        if (!nodeData) {
+                            throw new Error(`Node data for ${filePath} is null or undefined`);
+                        }
+                        validateLegacyNode(filePath, nodeData, graph);
+                        validatedNodes++;
+                        const nodeProgress = (validatedNodes / nodeCount) * 15;
+                        updateProgress(80 + nodeProgress, `Validating nodes... (${validatedNodes}/${nodeCount})`);
+                    }
                 }
+                
+                updateProgress(95, 'Building visualization...');
+            } else {
+                // For cached data, just get the node count
+                nodeCount = data.nodes ? data.nodes.length : Object.keys(data.graph).length;
             }
-            
-            updateProgress(95, 'Building visualization...');
             
             // If validation passes, load the graph
             currentGraphData = data;
             updateGraphStatistics(data);
+            
+            // Cache the validated data if not from cache
+            if (!fromCache && cacheKey) {
+                // Limit cache size to prevent memory issues (keep last 5 files)
+                if (graphDataCache.size >= 5) {
+                    const firstKey = graphDataCache.keys().next().value;
+                    graphDataCache.delete(firstKey);
+                }
+                graphDataCache.set(cacheKey, data);
+                console.log('Cached graph data with key:', cacheKey, `(${graphDataCache.size} files cached)`);
+            }
             
             updateProgress(100, 'Complete!');
             

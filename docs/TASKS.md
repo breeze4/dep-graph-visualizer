@@ -100,13 +100,13 @@
 - [x] 10.6 Update graph statistics display with real counts
 
 ### 11. Data Flow Integration
-- [ ] 11.1 Update file upload to work with new graph structure
-- [ ] 11.2 Update graph data validation for new format
-- [ ] 11.3 Fix auto-load to use new graph structure
-- [ ] 11.4 Update progress indicators for new data format
-- [ ] 11.5 Update error handling for new graph format
-- [ ] 11.6 Add graph data caching to avoid re-parsing
-- [ ] 11.7 Connect all statistics panels with real graph metrics
+- [x] 11.1 Update file upload to work with new graph structure
+- [x] 11.2 Update graph data validation for new format
+- [x] 11.3 Fix auto-load to use new graph structure
+- [x] 11.4 Update progress indicators for new data format
+- [x] 11.5 Update error handling for new graph format
+- [x] 11.6 Add graph data caching to avoid re-parsing
+- [x] 11.7 Connect all statistics panels with real graph metrics
 
 ### 12. Performance Optimizations
 - [ ] 12.1 Test performance with large graphs
