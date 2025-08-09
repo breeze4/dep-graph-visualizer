@@ -195,8 +195,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('Invalid data structure');
             }
             
-            if (!data.metadata || !data.graph) {
-                throw new Error('Missing required fields: metadata and graph');
+            if (!data.metadata || (!data.nodes && !data.graph)) {
+                throw new Error('Missing required fields: metadata and nodes (or legacy graph)');
             }
             
             // Validate metadata
@@ -206,25 +206,61 @@ document.addEventListener('DOMContentLoaded', function() {
             
             updateProgress(80, 'Validating graph data...');
             
-            // Validate graph structure
-            const graph = data.graph;
-            if (typeof graph !== 'object') {
-                throw new Error('Graph must be an object');
-            }
+            console.log('Data structure:', {
+                hasNodes: !!data.nodes,
+                hasEdges: !!data.edges,
+                hasGraph: !!data.graph,
+                nodesType: Array.isArray(data.nodes),
+                edgesType: Array.isArray(data.edges)
+            });
             
-            // Validate each node in the graph
-            const nodeCount = Object.keys(graph).length;
-            if (nodeCount === 0) {
-                throw new Error('Graph is empty - no files found');
-            }
+            let nodeCount = 0;
             
-            let validatedNodes = 0;
-            for (const [filePath, nodeData] of Object.entries(graph)) {
-                validateNode(filePath, nodeData, graph);
-                validatedNodes++;
-                // Update progress during node validation
-                const nodeProgress = (validatedNodes / nodeCount) * 15; // 15% for node validation
-                updateProgress(80 + nodeProgress, `Validating nodes... (${validatedNodes}/${nodeCount})`);
+            // Handle new spec format (nodes/edges arrays) or legacy format (graph object)
+            if (data.nodes && data.edges) {
+                // New spec format validation
+                if (!Array.isArray(data.nodes)) {
+                    throw new Error('Nodes must be an array');
+                }
+                if (!Array.isArray(data.edges)) {
+                    throw new Error('Edges must be an array');
+                }
+                
+                nodeCount = data.nodes.length;
+                if (nodeCount === 0) {
+                    throw new Error('Graph is empty - no nodes found');
+                }
+                
+                // Validate each node
+                let validatedNodes = 0;
+                for (const node of data.nodes) {
+                    validateSpecNode(node);
+                    validatedNodes++;
+                    const nodeProgress = (validatedNodes / nodeCount) * 15;
+                    updateProgress(80 + nodeProgress, `Validating nodes... (${validatedNodes}/${nodeCount})`);
+                }
+            } else {
+                // Legacy format validation
+                const graph = data.graph;
+                if (!graph || typeof graph !== 'object') {
+                    throw new Error('Graph must be a non-null object');
+                }
+                
+                nodeCount = Object.keys(graph).length;
+                if (nodeCount === 0) {
+                    throw new Error('Graph is empty - no files found');
+                }
+                
+                let validatedNodes = 0;
+                for (const [filePath, nodeData] of Object.entries(graph)) {
+                    if (!nodeData) {
+                        throw new Error(`Node data for ${filePath} is null or undefined`);
+                    }
+                    validateLegacyNode(filePath, nodeData, graph);
+                    validatedNodes++;
+                    const nodeProgress = (validatedNodes / nodeCount) * 15;
+                    updateProgress(80 + nodeProgress, `Validating nodes... (${validatedNodes}/${nodeCount})`);
+                }
             }
             
             updateProgress(95, 'Building visualization...');
@@ -237,7 +273,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Show success message briefly
             setTimeout(() => {
-                showSuccess(`Successfully loaded ${nodeCount} files!`);
+                const itemType = data.nodes ? 'modules' : 'files';
+                showSuccess(`Successfully loaded ${nodeCount} ${itemType}!`);
                 
                 // Show main interface after success message
                 setTimeout(() => {
@@ -250,7 +287,36 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    function validateNode(filePath, nodeData, graph) {
+    // Validation for new spec format
+    function validateSpecNode(node) {
+        // Check required fields
+        if (!node.id || typeof node.id !== 'string') {
+            throw new Error(`Node must have a string id, got: ${node.id}`);
+        }
+        
+        if (!node.type || !['app', 'lib', 'external'].includes(node.type)) {
+            throw new Error(`Node ${node.id}: type must be 'app', 'lib', or 'external'`);
+        }
+        
+        if (typeof node.linesOfCode !== 'number' || node.linesOfCode < 0) {
+            throw new Error(`Node ${node.id}: linesOfCode must be a positive number`);
+        }
+        
+        if (typeof node.fileCount !== 'number' || node.fileCount < 0) {
+            throw new Error(`Node ${node.id}: fileCount must be a positive number`);
+        }
+        
+        if (typeof node.incomingCount !== 'number' || node.incomingCount < 0) {
+            throw new Error(`Node ${node.id}: incomingCount must be a positive number`);
+        }
+        
+        if (typeof node.outgoingCount !== 'number' || node.outgoingCount < 0) {
+            throw new Error(`Node ${node.id}: outgoingCount must be a positive number`);
+        }
+    }
+
+    // Validation for legacy format
+    function validateLegacyNode(filePath, nodeData, graph) {
         // Check required fields
         if (!nodeData.hasOwnProperty('imports') || !Array.isArray(nodeData.imports)) {
             throw new Error(`Node ${filePath}: imports must be an array`);
@@ -342,38 +408,138 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateGraphStatistics(data, filteredNodes = null) {
         const stats = data.metadata.stats;
-        const graph = data.graph;
-        const nodesToCount = filteredNodes || Object.keys(graph);
-        
-        // Count apps vs libs
         let appCount = 0;
         let libCount = 0;
         let totalEdges = 0;
+        let nodesToCount = [];
         
-        nodesToCount.forEach(filePath => {
-            if (filePath.startsWith('apps/')) {
-                appCount++;
-            } else if (filePath.startsWith('libs/')) {
-                libCount++;
-            }
-        });
-        
-        // Count total edges
-        Object.entries(graph).forEach(([filePath, nodeData]) => {
-            if (nodesToCount.includes(filePath)) {
-                totalEdges += nodeData.imports.length;
-            }
-        });
+        // Handle both new spec format and legacy format
+        if (data.nodes && data.edges) {
+            // New spec format
+            nodesToCount = filteredNodes || data.nodes.map(node => node.id);
+            
+            // Count apps vs libs from nodes
+            data.nodes.forEach(node => {
+                if (!filteredNodes || filteredNodes.includes(node.id)) {
+                    if (node.type === 'app') {
+                        appCount++;
+                    } else if (node.type === 'lib') {
+                        libCount++;
+                    }
+                }
+            });
+            
+            // Count edges
+            totalEdges = data.edges.filter(edge => {
+                return (!filteredNodes || (filteredNodes.includes(edge.from) && filteredNodes.includes(edge.to)));
+            }).length;
+            
+        } else {
+            // Legacy format
+            const graph = data.graph;
+            nodesToCount = filteredNodes || Object.keys(graph);
+            
+            nodesToCount.forEach(filePath => {
+                if (filePath.startsWith('apps/')) {
+                    appCount++;
+                } else if (filePath.startsWith('libs/')) {
+                    libCount++;
+                }
+            });
+            
+            // Count total edges
+            Object.entries(graph).forEach(([filePath, nodeData]) => {
+                if (nodesToCount.includes(filePath)) {
+                    totalEdges += nodeData.imports.length;
+                }
+            });
+        }
         
         // Update statistics display
-        document.getElementById('total-files').textContent = Object.keys(graph).length;
+        const totalItems = data.nodes ? data.nodes.length : Object.keys(data.graph).length;
+        document.getElementById('total-files').textContent = totalItems;
         document.getElementById('total-apps').textContent = appCount;
         document.getElementById('total-libs').textContent = libCount;
         document.getElementById('total-edges').textContent = totalEdges;
         document.getElementById('visible-nodes').textContent = nodesToCount.length;
         
         // Update top files
-        updateTopFiles(graph, nodesToCount);
+        if (data.nodes && data.edges) {
+            updateTopModules(data, nodesToCount);
+        } else {
+            updateTopFiles(data.graph, nodesToCount);
+        }
+    }
+    
+    function updateTopModules(data, visibleModules) {
+        // Create module summary for statistics
+        const modules = data.nodes
+            .filter(node => !visibleModules || visibleModules.includes(node.id))
+            .map(node => ({
+                id: node.id,
+                name: node.id.split('/').pop(),
+                linesOfCode: node.linesOfCode,
+                fileCount: node.fileCount,
+                incomingCount: node.incomingCount,
+                outgoingCount: node.outgoingCount,
+                type: node.type
+            }));
+        
+        // Most imported modules (highest incoming count)
+        const mostImported = modules
+            .sort((a, b) => b.incomingCount - a.incomingCount)
+            .slice(0, 5);
+        
+        // Largest modules (most lines of code)
+        const largest = modules
+            .sort((a, b) => b.linesOfCode - a.linesOfCode)
+            .slice(0, 5);
+        
+        // Update most imported list
+        const importedList = document.getElementById('most-imported');
+        if (importedList) {
+            importedList.innerHTML = mostImported.map(module => 
+                `<li class="list-item">
+                    <div class="item-name">${module.name}</div>
+                    <div class="item-stats">
+                        <span class="stat">${module.incomingCount} deps</span>
+                        <span class="stat">${module.linesOfCode} LOC</span>
+                    </div>
+                </li>`
+            ).join('');
+        }
+        
+        // Update largest files list  
+        const largestList = document.getElementById('largest-files');
+        if (largestList) {
+            largestList.innerHTML = largest.map(module =>
+                `<li class="list-item">
+                    <div class="item-name">${module.name}</div>
+                    <div class="item-stats">
+                        <span class="stat">${module.linesOfCode} LOC</span>
+                        <span class="stat">${module.fileCount} files</span>
+                    </div>
+                </li>`
+            ).join('');
+        }
+        
+        // Update most exports (outgoing dependencies)
+        const mostExporting = modules
+            .sort((a, b) => b.outgoingCount - a.outgoingCount)
+            .slice(0, 5);
+            
+        const exportsList = document.getElementById('most-exports');
+        if (exportsList) {
+            exportsList.innerHTML = mostExporting.map(module =>
+                `<li class="list-item">
+                    <div class="item-name">${module.name}</div>
+                    <div class="item-stats">
+                        <span class="stat">${module.outgoingCount} imports</span>
+                        <span class="stat">${module.type}</span>
+                    </div>
+                </li>`
+            ).join('');
+        }
     }
     
     function updateTopFiles(graph, visibleNodes) {
@@ -490,43 +656,104 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function transformGraphData(data) {
-        const graph = data.graph;
         const transformedNodes = [];
         const transformedLinks = [];
         
-        // Create nodes array with metadata
-        Object.entries(graph).forEach(([filePath, nodeData]) => {
-            const node = {
-                id: filePath,
-                path: filePath,
-                linesOfCode: nodeData.linesOfCode,
-                imports: nodeData.imports,
-                importedBy: nodeData.importedBy,
-                isApp: filePath.startsWith('apps/'),
-                isLib: filePath.startsWith('libs/'),
-                // Calculate node size based on lines of code (min 8, max 50)
-                size: Math.max(8, Math.min(50, nodeData.linesOfCode * 0.8)),
-                // Determine color based on type
-                color: filePath.startsWith('apps/') ? '#3498db' : '#2ecc71',
-                // Short name for display
-                name: filePath.split('/').pop().replace(/\.(ts|js|tsx|jsx)$/, '')
-            };
-            transformedNodes.push(node);
-        });
-        
-        // Create links array from imports
-        Object.entries(graph).forEach(([filePath, nodeData]) => {
-            nodeData.imports.forEach(importPath => {
-                // Only create link if target exists in graph
-                if (graph[importPath]) {
-                    transformedLinks.push({
-                        source: filePath,
-                        target: importPath,
-                        id: `${filePath}->${importPath}`
-                    });
+        // Handle new spec format (nodes/edges arrays) or legacy format (graph object)
+        if (data.nodes && data.edges) {
+            // New spec format
+            data.nodes.forEach(node => {
+                const transformedNode = {
+                    id: node.id,
+                    path: node.id,
+                    linesOfCode: node.linesOfCode,
+                    fileCount: node.fileCount,
+                    incomingCount: node.incomingCount,
+                    outgoingCount: node.outgoingCount,
+                    type: node.type,
+                    isApp: node.type === 'app',
+                    isLib: node.type === 'lib',
+                    isExternal: node.type === 'external',
+                    // Calculate node size based on incoming dependencies (min 8, max 50)
+                    size: Math.max(8, Math.min(50, 8 + node.incomingCount * 6)),
+                    // Determine color based on type
+                    color: node.type === 'app' ? '#3498db' : 
+                           node.type === 'lib' ? '#2ecc71' : '#95a5a6',
+                    // Short name for display
+                    name: node.id.split('/').pop(),
+                    // Initialize arrays to be populated from edges
+                    imports: [],
+                    importedBy: []
+                };
+                transformedNodes.push(transformedNode);
+            });
+            
+            // Build imports/importedBy arrays from edges
+            data.edges.forEach(edge => {
+                const sourceNode = transformedNodes.find(n => n.id === edge.from);
+                const targetNode = transformedNodes.find(n => n.id === edge.to);
+                
+                if (sourceNode && targetNode) {
+                    sourceNode.imports.push(edge.to);
+                    targetNode.importedBy.push(edge.from);
                 }
             });
-        });
+            
+            // Transform edges to links
+            data.edges.forEach(edge => {
+                transformedLinks.push({
+                    source: edge.from,
+                    target: edge.to,
+                    id: `${edge.from}->${edge.to}`,
+                    count: edge.count,
+                    symbols: edge.symbols,
+                    // Calculate thickness based on count (min 1, max 8)
+                    thickness: Math.max(1, Math.min(8, edge.count * 2))
+                });
+            });
+        } else {
+            // Legacy format
+            const graph = data.graph;
+            
+            // Create nodes array with metadata
+            Object.entries(graph).forEach(([filePath, nodeData]) => {
+                const node = {
+                    id: filePath,
+                    path: filePath,
+                    linesOfCode: nodeData.linesOfCode,
+                    imports: nodeData.imports,
+                    importedBy: nodeData.importedBy,
+                    incomingCount: nodeData.importedBy ? nodeData.importedBy.length : 0,
+                    outgoingCount: nodeData.imports ? nodeData.imports.length : 0,
+                    isApp: filePath.startsWith('apps/'),
+                    isLib: filePath.startsWith('libs/'),
+                    // Calculate node size based on lines of code (min 8, max 50)
+                    size: Math.max(8, Math.min(50, nodeData.linesOfCode * 0.8)),
+                    // Determine color based on type
+                    color: filePath.startsWith('apps/') ? '#3498db' : '#2ecc71',
+                    // Short name for display
+                    name: filePath.split('/').pop().replace(/\.(ts|js|tsx|jsx)$/, '')
+                };
+                transformedNodes.push(node);
+            });
+            
+            // Create links array from imports
+            Object.entries(graph).forEach(([filePath, nodeData]) => {
+                nodeData.imports.forEach(importPath => {
+                    // Only create link if target exists in graph
+                    if (graph[importPath]) {
+                        transformedLinks.push({
+                            source: filePath,
+                            target: importPath,
+                            id: `${filePath}->${importPath}`,
+                            count: 1,
+                            symbols: [],
+                            thickness: 2
+                        });
+                    }
+                });
+            });
+        }
         
         return {
             nodes: transformedNodes,

@@ -61,11 +61,11 @@
 - [x] 5.9 Update metadata section to include apps and libs counts
 
 ### 6. Graph Visualization - Basic Setup
-- [ ] 6.1 Create D3 force simulation initialization
-- [ ] 6.2 Bind nodes array from JSON to D3 nodes
-- [ ] 6.3 Bind edges array from JSON to D3 links
-- [ ] 6.4 Implement basic node rendering as circles
-- [ ] 6.5 Implement basic edge rendering as lines
+- [x] 6.1 Create D3 force simulation initialization
+- [x] 6.2 Bind nodes array from JSON to D3 nodes
+- [x] 6.3 Bind edges array from JSON to D3 links
+- [x] 6.4 Implement basic node rendering as circles
+- [x] 6.5 Implement basic edge rendering as lines
 
 ### 7. Graph Visualization - Visual Encoding
 - [ ] 7.1 Scale node size based on incoming dependencies count
