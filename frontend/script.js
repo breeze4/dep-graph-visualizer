@@ -534,6 +534,20 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
     
+    // Calculate edge weight based on source and target connectivity
+    function calculateEdgeWeight(link) {
+        // Get connectivity metrics
+        const sourceImports = link.source.imports ? link.source.imports.length : 0;
+        const targetImportedBy = link.target.importedBy ? link.target.importedBy.length : 0;
+        
+        // Weight formula: considers both how many files the source imports
+        // and how many files import the target (importance of connection)
+        const weight = (sourceImports * 0.3 + targetImportedBy * 0.7) / 10;
+        
+        // Return value between 1.5 and 4 pixels for better visibility
+        return Math.max(1.5, Math.min(4, 1.5 + weight));
+    }
+    
     function renderGraph(graphData) {
         nodes = graphData.nodes;
         links = graphData.links;
@@ -542,18 +556,48 @@ document.addEventListener('DOMContentLoaded', function() {
         g.selectAll('.link').remove();
         g.selectAll('.node').remove();
         
-        // Add arrowhead marker for directed edges
-        svg.append('defs').append('marker')
+        // Clear existing defs and add new ones
+        svg.selectAll('defs').remove();
+        const defs = svg.append('defs');
+        
+        // Add small arrowhead marker for thin edges
+        defs.append('marker')
+            .attr('id', 'arrowhead-small')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 23) // Slightly closer for small arrows
+            .attr('refY', 0)
+            .attr('markerWidth', 4)
+            .attr('markerHeight', 4)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#99a');
+        
+        // Add standard arrowhead marker
+        defs.append('marker')
             .attr('id', 'arrowhead')
             .attr('viewBox', '0 -5 10 10')
-            .attr('refX', 15)
+            .attr('refX', 25) // Adjusted to position at node edge for average node size
             .attr('refY', 0)
             .attr('markerWidth', 6)
             .attr('markerHeight', 6)
             .attr('orient', 'auto')
             .append('path')
             .attr('d', 'M0,-5L10,0L0,5')
-            .attr('fill', '#999');
+            .attr('fill', '#99a');
+        
+        // Add large arrowhead marker for thick edges
+        defs.append('marker')
+            .attr('id', 'arrowhead-large')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 27) // Slightly further for large arrows
+            .attr('refY', 0)
+            .attr('markerWidth', 8)
+            .attr('markerHeight', 8)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('fill', '#99a');
         
         // Create links (edges) with enhanced styling
         const link = g.append('g')
@@ -562,36 +606,56 @@ document.addEventListener('DOMContentLoaded', function() {
             .data(links)
             .enter()
             .append('path')
-            .attr('class', 'link')
-            .attr('stroke', '#999')
-            .attr('stroke-opacity', 0.4)
+            .attr('class', d => {
+                // Add class based on connection type
+                const sourceType = d.source.isApp ? 'app' : d.source.isLib ? 'lib' : 'other';
+                const targetType = d.target.isApp ? 'app' : d.target.isLib ? 'lib' : 'other';
+                return `link link-${sourceType}-to-${targetType}`;
+            })
+            .attr('stroke', d => {
+                // Set stroke color based on connection type - darker colors for better visibility
+                if (d.source.isApp && d.target.isApp) return '#5577aa';
+                if (d.source.isLib && d.target.isLib) return '#55aa77';
+                if (d.source.isApp && d.target.isLib) return '#6688aa';
+                if (d.source.isLib && d.target.isApp) return '#66aa88';
+                return '#666';
+            })
+            .attr('stroke-opacity', 0.7) // Increased for better visibility
             .attr('stroke-width', d => {
-                // Vary stroke width based on importance
-                const sourceImports = d.source.imports ? d.source.imports.length : 1;
-                return Math.max(1, Math.min(3, sourceImports * 0.5));
+                // Calculate edge weight based on both source and target connectivity
+                const edgeWeight = calculateEdgeWeight(d);
+                return edgeWeight;
             })
             .attr('fill', 'none')
-            .attr('marker-end', 'url(#arrowhead)')
+            .attr('marker-end', d => {
+                // Select appropriate arrow marker based on edge weight
+                const weight = calculateEdgeWeight(d);
+                if (weight <= 1.5) return 'url(#arrowhead-small)';
+                else if (weight >= 2.5) return 'url(#arrowhead-large)';
+                else return 'url(#arrowhead)';
+            })
             .style('cursor', 'pointer')
             .on('mouseenter', function(event, d) {
-                // Highlight edge on hover
+                // Highlight edge on hover (CSS handles color change)
                 d3.select(this)
-                    .attr('stroke', '#e74c3c')
-                    .attr('stroke-opacity', 0.8)
-                    .attr('stroke-width', 3);
+                    .attr('stroke-opacity', 0.9)
+                    .attr('stroke-width', Math.max(3, calculateEdgeWeight(d) * 1.5));
                 
                 // Show tooltip
                 showLinkTooltip(event, d);
             })
             .on('mouseleave', function(event, d) {
-                // Reset edge styling
+                // Reset edge styling with correct color
+                let strokeColor = '#666';
+                if (d.source.isApp && d.target.isApp) strokeColor = '#5577aa';
+                else if (d.source.isLib && d.target.isLib) strokeColor = '#55aa77';
+                else if (d.source.isApp && d.target.isLib) strokeColor = '#6688aa';
+                else if (d.source.isLib && d.target.isApp) strokeColor = '#66aa88';
+                
                 d3.select(this)
-                    .attr('stroke', '#999')
-                    .attr('stroke-opacity', 0.4)
-                    .attr('stroke-width', d => {
-                        const sourceImports = d.source.imports ? d.source.imports.length : 1;
-                        return Math.max(1, Math.min(3, sourceImports * 0.5));
-                    });
+                    .attr('stroke', strokeColor)
+                    .attr('stroke-opacity', 0.7)
+                    .attr('stroke-width', calculateEdgeWeight(d));
                 
                 // Hide tooltip
                 hideLinkTooltip();
@@ -702,10 +766,44 @@ document.addEventListener('DOMContentLoaded', function() {
                 .attr('stroke-width', 4)
                 .attr('stroke', '#f39c12');
             
+            // Highlight connected edges
+            g.selectAll('.link')
+                .attr('stroke-opacity', linkData => {
+                    // Check if this edge is connected to the hovered node
+                    const isConnected = linkData.source.id === d.id || linkData.target.id === d.id;
+                    return isConnected ? 0.9 : 0.2;
+                })
+                .attr('stroke-width', linkData => {
+                    const isConnected = linkData.source.id === d.id || linkData.target.id === d.id;
+                    if (isConnected) {
+                        return Math.max(2.5, calculateEdgeWeight(linkData) * 1.3);
+                    }
+                    return calculateEdgeWeight(linkData);
+                });
+            
+            // Dim non-connected nodes
+            g.selectAll('.node').select('circle')
+                .attr('opacity', nodeData => {
+                    // Keep full opacity for hovered node and connected nodes
+                    if (nodeData.id === d.id) return 1;
+                    const isConnected = d.imports.includes(nodeData.id) || 
+                                      d.importedBy.includes(nodeData.id);
+                    return isConnected ? 1 : 0.3;
+                });
+            
             // Show node tooltip
             showNodeTooltip(event, d);
         })
         .on('mouseleave', function(event, d) {
+            // Reset edge styling
+            g.selectAll('.link')
+                .attr('stroke-opacity', 0.7)
+                .attr('stroke-width', linkData => calculateEdgeWeight(linkData));
+            
+            // Reset node opacity
+            g.selectAll('.node').select('circle')
+                .attr('opacity', 1);
+            
             // Reset node styling (unless selected)
             const isSelected = g.selectAll('.node')
                 .filter(n => n.id === d.id)

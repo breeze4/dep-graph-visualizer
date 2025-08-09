@@ -95,6 +95,39 @@
 - [x] Handle edge curves to avoid node overlap
 - [x] Add edge hover effects
 
+## Section 4.5: Arrow Edge Enhancement
+
+### Step 1: Fix Basic Arrow Positioning
+- [x] Add a second arrow marker definition with adjusted refX to position arrows at node edge instead of overlapping
+- [x] Update existing edge rendering to use the new arrow marker
+- [x] Test that arrows point to node edges for all node sizes
+
+### Step 2: Enhance Edge Weight Calculation
+- [x] Add edge weight calculation function that considers both source imports and target importedBy counts
+- [x] Update stroke-width calculation to use new weight function (keeping 1-3px range)
+- [x] Verify all edges render with appropriate thickness
+
+### Step 3: Create Size-Based Arrow Markers
+- [x] Add "arrowhead-small" marker (for thin edges)
+- [x] Add "arrowhead-large" marker (for thick edges)
+- [x] Update edge rendering to select appropriate marker based on stroke width
+- [x] Test that different arrow sizes render correctly
+
+### Step 4: Improve Edge Visibility
+- [x] Increase edge stroke opacity from 0.4 to 0.6 for better visibility
+- [x] Add subtle edge color variation based on source node type (keep #999 base, slight blue/green tint)
+- [x] Update hover state to use brighter highlight color
+
+### Step 5: Add Connection Type Styling
+- [x] Add CSS classes for edge types (app-to-app, lib-to-lib, app-to-lib)
+- [x] Apply appropriate class during edge creation based on source/target types
+- [x] Style each edge type with subtle color differences
+
+### Step 6: Enhance Edge Hover Behavior
+- [x] Add edge highlighting when hovering connected nodes
+- [x] Implement opacity changes for non-connected edges during node hover
+- [x] Ensure smooth transitions for all edge state changes
+
 ## Section 5: Interactive Features
 
 ### Node Labels & Text
