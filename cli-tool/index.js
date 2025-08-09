@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { Project } = require('ts-morph');
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -44,6 +45,41 @@ console.log('========================');
 console.log(`App directory:  ${appPath}`);
 console.log(`Libs directory: ${libsPath}`);
 console.log('');
+
+// Initialize ts-morph project
+function initializeTsMorphProject(appDir, libsDir) {
+    console.log('Initializing TypeScript project...');
+    
+    // Find tsconfig.json - look in parent directories
+    let tsconfigPath = null;
+    let searchDir = path.dirname(appDir);
+    
+    // Search up the directory tree for tsconfig.json
+    for (let i = 0; i < 5; i++) { // Limit search depth
+        const candidate = path.join(searchDir, 'tsconfig.json');
+        if (fs.existsSync(candidate)) {
+            tsconfigPath = candidate;
+            break;
+        }
+        searchDir = path.dirname(searchDir);
+    }
+    
+    if (tsconfigPath) {
+        console.log(`  Found tsconfig.json at: ${tsconfigPath}`);
+    } else {
+        console.log('  No tsconfig.json found, using default TypeScript configuration');
+    }
+    
+    // Create ts-morph project
+    const project = new Project({
+        tsConfigFilePath: tsconfigPath,
+        skipAddingFilesFromTsConfig: true, // We'll add files manually
+        skipFileDependencyResolution: false,
+        skipLoadingLibFiles: true // Skip lib files for performance
+    });
+    
+    return project;
+}
 
 // Check if file is a JavaScript/TypeScript file
 function isJsOrTsFile(filePath) {
@@ -216,6 +252,9 @@ function buildDependencyGraph(files, projectRoot) {
 // Main analysis function
 function analyzeDirectories(appDir, libsDir) {
     console.log('Starting analysis...\n');
+    
+    // Initialize ts-morph project
+    const project = initializeTsMorphProject(appDir, libsDir);
     
     // Determine common base path for relative paths
     const commonBase = path.dirname(path.commonBase ? path.commonBase([appDir, libsDir]) : appDir);

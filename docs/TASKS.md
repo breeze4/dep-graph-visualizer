@@ -29,10 +29,10 @@
 - [x] 1.6 Add progress indicators during file processing
 
 ### 2. Graph Generation CLI Tool - File Processing
-- [ ] 2.1 Initialize ts-morph project with TypeScript configuration from example app
-- [ ] 2.2 Update file traversal to work with the two separate directories
-- [ ] 2.3 Keep existing test file detection logic
-- [ ] 2.4 Keep existing lines of code counting per file
+- [x] 2.1 Initialize ts-morph project with TypeScript configuration from example app
+- [x] 2.2 Update file traversal to work with the two separate directories
+- [x] 2.3 Keep existing test file detection logic
+- [x] 2.4 Keep existing lines of code counting per file
 
 ### 3. Graph Generation CLI Tool - Import Parsing
 - [ ] 3.1 Replace regex-based import parsing with ts-morph AST parsing
