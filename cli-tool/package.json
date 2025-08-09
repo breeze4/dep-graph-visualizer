@@ -1,0 +1,21 @@
+{
+  "name": "dep-graph-cli",
+  "version": "1.0.0",
+  "description": "CLI tool for generating dependency graphs from TypeScript/JavaScript codebases",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "dependency",
+    "graph",
+    "typescript",
+    "analysis",
+    "cli"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ts-morph": "^26.0.0"
+  }
+}

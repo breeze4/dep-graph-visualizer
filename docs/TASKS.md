@@ -12,6 +12,14 @@
 
 ## Task lists
 
+### 0. CLI Tool Project Setup
+- [x] 0.1 Create cli-tool directory for the graph generation tool
+- [x] 0.2 Move graph-main.js to cli-tool/index.js
+- [x] 0.3 Create package.json in cli-tool directory with basic configuration
+- [x] 0.4 Add ts-morph as a dependency in package.json
+- [x] 0.5 Add npm start script to run the CLI tool
+- [x] 0.6 Test that the tool runs from the new location
+
 ### 1. Graph Generation CLI Tool - Basic Setup
 - [ ] 1.1 Install ts-morph dependency for TypeScript parsing
 - [ ] 1.2 Update command-line parsing to accept two separate parameters (app-dir and libs-dir) instead of one
