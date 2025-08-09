@@ -35,12 +35,12 @@
 - [x] 2.4 Keep existing lines of code counting per file
 
 ### 3. Graph Generation CLI Tool - Import Parsing
-- [ ] 3.1 Replace regex-based import parsing with ts-morph AST parsing
-- [ ] 3.2 Extract imported symbols from each import statement
-- [ ] 3.3 Add support for TypeScript-specific imports (type imports, interfaces, etc.)
-- [ ] 3.4 Distinguish between type imports and value imports
-- [ ] 3.5 Handle TypeScript path aliases and tsconfig paths mapping
-- [ ] 3.6 Resolve relative imports to absolute module paths
+- [x] 3.1 Replace regex-based import parsing with ts-morph AST parsing
+- [x] 3.2 Extract imported symbols from each import statement
+- [x] 3.3 Add support for TypeScript-specific imports (type imports, interfaces, etc.)
+- [x] 3.4 Distinguish between type imports and value imports
+- [x] 3.5 Handle TypeScript path aliases and tsconfig paths mapping
+- [x] 3.6 Resolve relative imports to absolute module paths
 
 ### 4. Graph Generation CLI Tool - Module Aggregation
 - [ ] 4.1 Implement module detection by directory boundaries (each directory = module)

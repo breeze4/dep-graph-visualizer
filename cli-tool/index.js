@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { Project } = require('ts-morph');
+const { Project, SyntaxKind } = require('ts-morph');
 
 // Parse command line arguments
 const args = process.argv.slice(2);
@@ -140,63 +140,195 @@ function countLines(filePath) {
     return content.split('\n').length;
 }
 
-// Parse imports from a JavaScript/TypeScript file
-function parseImports(filePath, projectRoot) {
-    const content = fs.readFileSync(filePath, 'utf8');
+// Parse imports from a JavaScript/TypeScript file using ts-morph AST
+function parseImportsWithTsMorph(project, filePath, projectRoot) {
     const imports = [];
     
-    // Regular expressions for different import styles
-    const importPatterns = [
-        // ES6 imports: import ... from './path'
-        /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+)\s+from\s+)?['"]([^'"]+)['"]/g,
-        // CommonJS requires: require('./path')
-        /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
-        // Dynamic imports: import('./path')
-        /import\s*\(\s*['"]([^'"]+)['"]\s*\)/g
-    ];
-    
-    for (const pattern of importPatterns) {
-        let match;
-        while ((match = pattern.exec(content)) !== null) {
-            const importPath = match[1];
+    try {
+        // Add the source file to the project if not already added
+        const sourceFile = project.addSourceFileAtPathIfExists(filePath) || 
+                          project.addSourceFileAtPath(filePath);
+        
+        // Get all import declarations
+        const importDeclarations = sourceFile.getImportDeclarations();
+        
+        for (const importDecl of importDeclarations) {
+            const moduleSpecifier = importDecl.getModuleSpecifierValue();
             
             // Only process relative imports (internal to project)
-            if (importPath.startsWith('.') || importPath.startsWith('/')) {
-                imports.push(importPath);
+            if (moduleSpecifier.startsWith('.') || moduleSpecifier.startsWith('/')) {
+                const importInfo = {
+                    path: moduleSpecifier,
+                    symbols: [],
+                    isTypeOnly: importDecl.isTypeOnly()
+                };
+                
+                // Extract imported symbols
+                const namedImports = importDecl.getNamedImports();
+                for (const namedImport of namedImports) {
+                    importInfo.symbols.push({
+                        name: namedImport.getName(),
+                        alias: namedImport.getAliasNode()?.getText(),
+                        isTypeOnly: namedImport.isTypeOnly()
+                    });
+                }
+                
+                // Extract default import
+                const defaultImport = importDecl.getDefaultImport();
+                if (defaultImport) {
+                    importInfo.symbols.push({
+                        name: 'default',
+                        alias: defaultImport.getText(),
+                        isTypeOnly: false
+                    });
+                }
+                
+                // Extract namespace import
+                const namespaceImport = importDecl.getNamespaceImport();
+                if (namespaceImport) {
+                    importInfo.symbols.push({
+                        name: '*',
+                        alias: namespaceImport.getText(),
+                        isTypeOnly: false
+                    });
+                }
+                
+                imports.push(importInfo);
+            }
+        }
+        
+        // Also check for require() calls in CommonJS style
+        const callExpressions = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression);
+            
+        for (const callExpr of callExpressions) {
+            const expression = callExpr.getExpression();
+            if (expression.getText() === 'require') {
+                const args = callExpr.getArguments();
+                if (args.length > 0) {
+                    const firstArg = args[0];
+                    if (firstArg.getKind() === SyntaxKind.StringLiteral) {
+                        const moduleSpecifier = firstArg.getLiteralValue();
+                        if (typeof moduleSpecifier === 'string' && 
+                            (moduleSpecifier.startsWith('.') || moduleSpecifier.startsWith('/'))) {
+                            imports.push({
+                                path: moduleSpecifier,
+                                symbols: [{ name: 'default', alias: null, isTypeOnly: false }],
+                                isTypeOnly: false
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        
+    } catch (error) {
+        console.warn(`Warning: Failed to parse ${filePath} with ts-morph:`, error.message);
+        // Fall back to the original regex parsing for this file
+        return parseImportsRegexFallback(filePath, projectRoot);
+    }
+    
+    // Resolve import paths to actual file paths using ts-morph's resolution
+    const resolvedImports = [];
+    const fileDir = path.dirname(filePath);
+    
+    for (const importInfo of imports) {
+        let resolvedPath = null;
+        
+        try {
+            // Try to use ts-morph's module resolution first
+            const moduleResolution = sourceFile.getReferencedSourceFiles()
+                .find(ref => {
+                    const refPath = ref.getFilePath();
+                    const moduleSpec = importInfo.path;
+                    return refPath.includes(moduleSpec.replace('./', '').replace('../', ''));
+                });
+                
+            if (moduleResolution) {
+                resolvedPath = moduleResolution.getFilePath();
+            }
+        } catch (error) {
+            // Fall back to manual resolution
+        }
+        
+        // Manual resolution as fallback
+        if (!resolvedPath) {
+            resolvedPath = resolveImportPath(importInfo.path, fileDir);
+        }
+        
+        if (resolvedPath && fs.existsSync(resolvedPath)) {
+            const relativePath = path.relative(projectRoot, resolvedPath);
+            resolvedImports.push({
+                path: relativePath,
+                symbols: importInfo.symbols,
+                isTypeOnly: importInfo.isTypeOnly
+            });
+        }
+    }
+    
+    return resolvedImports;
+}
+
+// Helper function to resolve import paths
+function resolveImportPath(importPath, fileDir) {
+    let resolvedPath = path.resolve(fileDir, importPath);
+    
+    // Try different extensions if none specified
+    if (!path.extname(resolvedPath)) {
+        const extensions = ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'];
+        for (const ext of extensions) {
+            if (fs.existsSync(resolvedPath + ext)) {
+                return resolvedPath + ext;
+            }
+        }
+        // Also check for index files
+        const indexPath = path.join(resolvedPath, 'index');
+        for (const ext of extensions) {
+            if (fs.existsSync(indexPath + ext)) {
+                return indexPath + ext;
             }
         }
     }
     
-    // Resolve import paths to actual file paths
+    return fs.existsSync(resolvedPath) ? resolvedPath : null;
+}
+
+// Fallback regex parsing (simplified version of original)
+function parseImportsRegexFallback(filePath, projectRoot) {
+    const content = fs.readFileSync(filePath, 'utf8');
+    const imports = [];
+    
+    // Simple regex for import statements
+    const importRegex = /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+)\s+from\s+)?['"]([^'"]+)['"]/g;
+    const requireRegex = /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+    
+    let match;
+    while ((match = importRegex.exec(content)) !== null) {
+        const importPath = match[1];
+        if (importPath.startsWith('.') || importPath.startsWith('/')) {
+            imports.push({ path: importPath, symbols: [], isTypeOnly: false });
+        }
+    }
+    
+    while ((match = requireRegex.exec(content)) !== null) {
+        const importPath = match[1];
+        if (importPath.startsWith('.') || importPath.startsWith('/')) {
+            imports.push({ path: importPath, symbols: [], isTypeOnly: false });
+        }
+    }
+    
+    // Resolve import paths
     const resolvedImports = [];
     const fileDir = path.dirname(filePath);
     
-    for (const importPath of imports) {
-        let resolvedPath = path.resolve(fileDir, importPath);
-        
-        // Try different extensions if none specified
-        if (!path.extname(resolvedPath)) {
-            const extensions = ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'];
-            for (const ext of extensions) {
-                if (fs.existsSync(resolvedPath + ext)) {
-                    resolvedPath = resolvedPath + ext;
-                    break;
-                }
-            }
-            // Also check for index files
-            const indexPath = path.join(resolvedPath, 'index');
-            for (const ext of extensions) {
-                if (fs.existsSync(indexPath + ext)) {
-                    resolvedPath = indexPath + ext;
-                    break;
-                }
-            }
-        }
-        
-        // Convert to relative path from project root
-        if (fs.existsSync(resolvedPath)) {
+    for (const importInfo of imports) {
+        const resolvedPath = resolveImportPath(importInfo.path, fileDir);
+        if (resolvedPath && fs.existsSync(resolvedPath)) {
             const relativePath = path.relative(projectRoot, resolvedPath);
-            resolvedImports.push(relativePath);
+            resolvedImports.push({
+                path: relativePath,
+                symbols: importInfo.symbols,
+                isTypeOnly: importInfo.isTypeOnly
+            });
         }
     }
     
@@ -204,7 +336,7 @@ function parseImports(filePath, projectRoot) {
 }
 
 // Build dependency graph from files
-function buildDependencyGraph(files, projectRoot) {
+function buildDependencyGraph(project, files, projectRoot) {
     const graph = {};
     
     // Initialize graph nodes with LOC data
@@ -232,13 +364,15 @@ function buildDependencyGraph(files, projectRoot) {
                 console.log(`  Processing files: ${processedCount}/${totalNonTestFiles} (${percentage}%)...`);
             }
             
-            const imports = parseImports(file.absolutePath, projectRoot);
+            const imports = parseImportsWithTsMorph(project, file.absolutePath, projectRoot);
             
-            // Update imports for current file
-            graph[file.relativePath].imports = imports;
+            // Update imports for current file - extract just paths for backward compatibility
+            const importPaths = imports.map(imp => imp.path);
+            graph[file.relativePath].imports = importPaths;
+            graph[file.relativePath].importDetails = imports; // Store full import details
             
             // Update importedBy for imported files
-            for (const importPath of imports) {
+            for (const importPath of importPaths) {
                 if (graph[importPath]) {
                     graph[importPath].importedBy.push(file.relativePath);
                 }
@@ -274,7 +408,7 @@ function analyzeDirectories(appDir, libsDir) {
     
     // Build dependency graph
     console.log('\nBuilding dependency graph...');
-    const graph = buildDependencyGraph(allFiles, commonBase);
+    const graph = buildDependencyGraph(project, allFiles, commonBase);
     
     // Count lines of code
     console.log('\nCounting lines of code...');
