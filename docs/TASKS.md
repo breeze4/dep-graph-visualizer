@@ -84,12 +84,12 @@
 - [x] 8.7 Implement collision detection to prevent node overlap
 
 ### 9. UI Components - Information Panels
-- [ ] 9.1 Connect node selection to existing file details panel
-- [ ] 9.2 Display node details (type, LOC, file count) in panel
-- [ ] 9.3 Add incoming dependencies list to node details panel
-- [ ] 9.4 Add outgoing dependencies list to node details panel
-- [ ] 9.5 Implement edge details view showing imported symbols
-- [ ] 9.6 Update existing panels to show real data instead of placeholders
+- [x] 9.1 Connect node selection to existing file details panel
+- [x] 9.2 Display node details (type, LOC, file count) in panel
+- [x] 9.3 Add incoming dependencies list to node details panel
+- [x] 9.4 Add outgoing dependencies list to node details panel
+- [x] 9.5 Implement edge details view showing imported symbols
+- [x] 9.6 Update existing panels to show real data instead of placeholders
 
 ### 10. UI Components - Controls and Filters
 - [ ] 10.1 Connect search input to filter nodes by name

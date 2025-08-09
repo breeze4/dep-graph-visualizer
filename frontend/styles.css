@@ -69,6 +69,81 @@ main {
     transform: translateY(1px);
 }
 
+/* Edge details styling */
+.edge-details {
+    padding: 0.5rem 0;
+}
+
+.path-detail {
+    color: #666;
+    font-size: 11px;
+    margin-left: 1rem;
+    margin-top: -0.5rem;
+    margin-bottom: 1rem;
+}
+
+.symbols-list {
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid #e0e6ed;
+    border-radius: 4px;
+    background: #f8f9fa;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+}
+
+.symbols-list li {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: #2c3e50;
+    padding: 2px 0;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.symbols-list li:last-child {
+    border-bottom: none;
+}
+
+.edge-actions {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e0e6ed;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+    flex: 1;
+    min-width: 80px;
+}
+
+.action-btn:hover {
+    background: #229954;
+}
+
+.action-btn:active {
+    transform: translateY(1px);
+}
+
+.action-btn.active {
+    background: #e74c3c;
+    color: white;
+}
+
+.action-btn.active:hover {
+    background: #c0392b;
+}
+
 /* Upload Zone Styles */
 .upload-zone {
     padding: 3rem;

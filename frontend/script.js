@@ -860,7 +860,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 else if (weight >= 2.5) return 'url(#arrowhead-large)';
                 else return 'url(#arrowhead)';
             })
-            .style('cursor', 'pointer')
             .on('mouseenter', function(event, d) {
                 // Highlight edge on hover (CSS handles color change)
                 d3.select(this)
@@ -885,6 +884,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Hide tooltip
                 hideLinkTooltip();
+            });
+        
+        // Create invisible wider click areas for easier edge clicking
+        const linkClickArea = g.append('g')
+            .attr('class', 'link-click-areas')
+            .selectAll('.link-click-area')
+            .data(links)
+            .enter()
+            .append('path')
+            .attr('class', 'link-click-area')
+            .attr('stroke', 'transparent')
+            .attr('stroke-width', 12) // Much wider for easier clicking
+            .attr('fill', 'none')
+            .style('cursor', 'pointer')
+            .on('click', function(event, d) {
+                event.stopPropagation();
+                selectEdge(d);
+            })
+            .on('mouseenter', function(event, d) {
+                // Forward hover events to the visible edge
+                const visibleEdge = g.selectAll('.link').filter(linkData => linkData === d);
+                visibleEdge.dispatch('mouseenter', { detail: event });
+            })
+            .on('mouseleave', function(event, d) {
+                // Forward hover events to the visible edge
+                const visibleEdge = g.selectAll('.link').filter(linkData => linkData === d);
+                visibleEdge.dispatch('mouseleave', { detail: event });
             });
         
         // Create nodes (circles)
@@ -953,7 +979,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update positions on each tick with curved paths
         currentSimulation.on('tick', () => {
-            link.attr('d', d => {
+            const pathGenerator = d => {
                 const dx = d.target.x - d.source.x;
                 const dy = d.target.y - d.source.y;
                 const dr = Math.sqrt(dx * dx + dy * dy) * 0.3; // Curve factor
@@ -964,7 +990,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const sweep = sourceIndex < targetIndex ? 0 : 1;
                 
                 return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,${sweep} ${d.target.x},${d.target.y}`;
-            });
+            };
+            
+            // Update visible links
+            link.attr('d', pathGenerator);
+            
+            // Update invisible click areas with same path
+            linkClickArea.attr('d', pathGenerator);
             
             node.attr('transform', d => `translate(${d.x},${d.y})`);
         });
@@ -1067,6 +1099,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let focusMode = false;
     let focusedNode = null;
+    let connectionFocusMode = false;
+    let focusedConnection = null;
 
     function selectNode(nodeData) {
         // Update info panel with node details
@@ -1076,7 +1110,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <h4>${nodeData.name}</h4>
                 <p><strong>Path:</strong> ${nodeData.path}</p>
                 <p><strong>Lines of Code:</strong> ${nodeData.linesOfCode}</p>
-                <p><strong>Type:</strong> ${nodeData.isApp ? 'App' : 'Library'}</p>
+                <p><strong>File Count:</strong> ${nodeData.fileCount || 1}</p>
+                <p><strong>Type:</strong> ${nodeData.type ? (nodeData.type === 'app' ? 'App' : nodeData.type === 'lib' ? 'Library' : 'External') : (nodeData.isApp ? 'App' : 'Library')}</p>
                 <p><strong>Imports:</strong> ${nodeData.imports.length} files</p>
                 <p><strong>Imported By:</strong> ${nodeData.importedBy.length} files</p>
             </div>
@@ -1203,14 +1238,249 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    function selectEdge(edgeData) {
+        // Update info panel with edge details
+        const fileInfo = document.getElementById('file-info');
+        const sourceName = edgeData.source.name || edgeData.source.id.split('/').pop();
+        const targetName = edgeData.target.name || edgeData.target.id.split('/').pop();
+        
+        fileInfo.innerHTML = `
+            <div class="edge-details">
+                <h4>Dependency Connection</h4>
+                <p><strong>From:</strong> ${sourceName}</p>
+                <p class="path-detail">${edgeData.source.path}</p>
+                <p><strong>To:</strong> ${targetName}</p>
+                <p class="path-detail">${edgeData.target.path}</p>
+                <p><strong>Import Count:</strong> ${edgeData.count || 1}</p>
+                ${edgeData.symbols && edgeData.symbols.length > 0 ? `
+                    <p><strong>Imported Symbols:</strong></p>
+                    <ul class="symbols-list">
+                        ${edgeData.symbols.map(symbol => `<li>${symbol}</li>`).join('')}
+                    </ul>
+                ` : '<p><em>No symbol information available</em></p>'}
+            </div>
+            
+            <div class="edge-actions">
+                <button class="action-btn" id="highlight-btn" data-source="${edgeData.source.id}" data-target="${edgeData.target.id}" onclick="toggleHighlightPath('${edgeData.source.id}', '${edgeData.target.id}')">
+                    ${isPathHighlighted(edgeData.source.id, edgeData.target.id) ? 'Clear Highlight' : 'Highlight Path'}
+                </button>
+                <button class="action-btn" id="focus-btn" data-source="${edgeData.source.id}" data-target="${edgeData.target.id}" onclick="toggleConnectionFocus('${edgeData.source.id}', '${edgeData.target.id}')">
+                    ${connectionFocusMode && focusedConnection === `${edgeData.source.id}-${edgeData.target.id}` ? 'Exit Focus' : 'Focus Connection'}
+                </button>
+            </div>
+        `;
+        
+        // Highlight the selected edge
+        g.selectAll('.link')
+            .transition()
+            .duration(300)
+            .ease(d3.easeQuadOut)
+            .attr('stroke-opacity', d => d === edgeData ? 0.9 : 0.3)
+            .attr('stroke-width', d => d === edgeData ? Math.max(4, (d.thickness || calculateEdgeWeight(d)) * 1.8) : (d.thickness || calculateEdgeWeight(d)));
+        
+        // Highlight connected nodes
+        g.selectAll('.node circle')
+            .transition()
+            .duration(300)
+            .ease(d3.easeQuadOut)
+            .attr('stroke', d => (d.id === edgeData.source.id || d.id === edgeData.target.id) ? '#e74c3c' : '#fff')
+            .attr('stroke-width', d => (d.id === edgeData.source.id || d.id === edgeData.target.id) ? 4 : 2)
+            .attr('opacity', d => (d.id === edgeData.source.id || d.id === edgeData.target.id) ? 1 : 0.6);
+    }
+    
+    let highlightedPath = null;
+    
+    function isPathHighlighted(sourceId, targetId) {
+        return highlightedPath === `${sourceId}-${targetId}`;
+    }
+    
+    function toggleHighlightPath(sourceId, targetId) {
+        const pathKey = `${sourceId}-${targetId}`;
+        
+        if (highlightedPath === pathKey) {
+            // Clear highlight - reset to full view
+            clearAllHighlights();
+        } else {
+            // Apply highlight
+            highlightedPath = pathKey;
+            highlightPath(sourceId, targetId);
+        }
+        
+        // Update button state
+        updateEdgeActionButtons(sourceId, targetId);
+    }
+    
+    function highlightPath(sourceId, targetId) {
+        // Find and highlight the specific path
+        g.selectAll('.link')
+            .transition()
+            .duration(300)
+            .ease(d3.easeQuadOut)
+            .attr('stroke-opacity', d => (d.source.id === sourceId && d.target.id === targetId) ? 0.9 : 0.2);
+        
+        g.selectAll('.node circle')
+            .transition()
+            .duration(300)
+            .ease(d3.easeQuadOut)
+            .attr('opacity', d => (d.id === sourceId || d.id === targetId) ? 1 : 0.3);
+    }
+    
+    function toggleConnectionFocus(sourceId, targetId) {
+        const connectionKey = `${sourceId}-${targetId}`;
+        
+        if (connectionFocusMode && focusedConnection === connectionKey) {
+            // Exit connection focus
+            exitConnectionFocus();
+        } else {
+            // Enter connection focus
+            enterConnectionFocus(sourceId, targetId);
+        }
+        
+        // Update button state
+        updateEdgeActionButtons(sourceId, targetId);
+    }
+    
+    function enterConnectionFocus(sourceId, targetId) {
+        connectionFocusMode = true;
+        focusedConnection = `${sourceId}-${targetId}`;
+        
+        // Enter focus mode on both connected nodes
+        const connectedNodeIds = new Set([sourceId, targetId]);
+        
+        // Fade non-connected elements
+        g.selectAll('.node')
+            .transition()
+            .duration(500)
+            .ease(d3.easeQuadInOut)
+            .style('opacity', d => connectedNodeIds.has(d.id) ? 1 : 0.1)
+            .on('end', function(d) {
+                d3.select(this).style('pointer-events', connectedNodeIds.has(d.id) ? 'all' : 'none');
+            });
+        
+        g.selectAll('.link')
+            .transition()
+            .duration(500)
+            .ease(d3.easeQuadInOut)
+            .style('opacity', d => connectedNodeIds.has(d.source.id) && connectedNodeIds.has(d.target.id) ? 0.7 : 0.05)
+            .on('end', function(d) {
+                const isConnected = connectedNodeIds.has(d.source.id) && connectedNodeIds.has(d.target.id);
+                d3.select(this).style('pointer-events', isConnected ? 'all' : 'none');
+            });
+    }
+    
+    function exitConnectionFocus() {
+        connectionFocusMode = false;
+        focusedConnection = null;
+        
+        // Restore full view
+        g.selectAll('.node')
+            .transition()
+            .duration(500)
+            .ease(d3.easeQuadInOut)
+            .style('opacity', 1)
+            .on('end', function() {
+                d3.select(this).style('pointer-events', 'all');
+            });
+        
+        g.selectAll('.link')
+            .transition()
+            .duration(500)
+            .ease(d3.easeQuadInOut)
+            .style('opacity', 0.7)
+            .on('end', function() {
+                d3.select(this).style('pointer-events', 'all');
+            });
+        
+        // Update any visible button states
+        updateAllEdgeButtons();
+    }
+    
+    function clearAllHighlights() {
+        highlightedPath = null;
+        
+        // Reset all styling to normal
+        g.selectAll('.link')
+            .transition()
+            .duration(300)
+            .ease(d3.easeQuadOut)
+            .attr('stroke-opacity', 0.7);
+        
+        g.selectAll('.node circle')
+            .transition()
+            .duration(300)
+            .ease(d3.easeQuadOut)
+            .attr('opacity', 1);
+        
+        // Update any visible button states
+        updateAllEdgeButtons();
+    }
+    
+    function updateEdgeActionButtons(sourceId, targetId) {
+        const connectionKey = `${sourceId}-${targetId}`;
+        
+        // Find buttons by data attributes in the current edge details panel
+        const highlightBtn = document.querySelector(`#highlight-btn[data-source="${sourceId}"][data-target="${targetId}"]`);
+        const focusBtn = document.querySelector(`#focus-btn[data-source="${sourceId}"][data-target="${targetId}"]`);
+        
+        if (highlightBtn) {
+            const isHighlighted = isPathHighlighted(sourceId, targetId);
+            highlightBtn.textContent = isHighlighted ? 'Clear Highlight' : 'Highlight Path';
+            highlightBtn.className = isHighlighted ? 'action-btn active' : 'action-btn';
+        }
+        
+        if (focusBtn) {
+            const isFocused = connectionFocusMode && focusedConnection === connectionKey;
+            focusBtn.textContent = isFocused ? 'Exit Focus' : 'Focus Connection';
+            focusBtn.className = isFocused ? 'action-btn active' : 'action-btn';
+        }
+    }
+    
+    function updateAllEdgeButtons() {
+        // Find all edge action buttons by data attributes
+        const highlightBtns = document.querySelectorAll('#highlight-btn[data-source][data-target]');
+        const focusBtns = document.querySelectorAll('#focus-btn[data-source][data-target]');
+        
+        highlightBtns.forEach(btn => {
+            const sourceId = btn.dataset.source;
+            const targetId = btn.dataset.target;
+            if (sourceId && targetId) {
+                const isHighlighted = isPathHighlighted(sourceId, targetId);
+                btn.textContent = isHighlighted ? 'Clear Highlight' : 'Highlight Path';
+                btn.className = isHighlighted ? 'action-btn active' : 'action-btn';
+            }
+        });
+        
+        focusBtns.forEach(btn => {
+            const sourceId = btn.dataset.source;
+            const targetId = btn.dataset.target;
+            if (sourceId && targetId) {
+                const connectionKey = `${sourceId}-${targetId}`;
+                const isFocused = connectionFocusMode && focusedConnection === connectionKey;
+                btn.textContent = isFocused ? 'Exit Focus' : 'Focus Connection';
+                btn.className = isFocused ? 'action-btn active' : 'action-btn';
+            }
+        });
+    }
+    
     // Make functions globally available for button onclick
     window.toggleFocusMode = toggleFocusMode;
+    window.toggleHighlightPath = toggleHighlightPath;
+    window.toggleConnectionFocus = toggleConnectionFocus;
+    window.isPathHighlighted = isPathHighlighted;
     
     function resetGraphView() {
         // Exit focus mode if active
         if (focusMode) {
             exitFocusMode();
         }
+        
+        // Exit connection focus mode if active
+        if (connectionFocusMode) {
+            exitConnectionFocus();
+        }
+        
+        // Clear path highlights
+        clearAllHighlights();
         
         if (svg && zoom) {
             svg.transition()
@@ -1224,10 +1494,19 @@ document.addEventListener('DOMContentLoaded', function() {
             .duration(300)
             .ease(d3.easeQuadOut)
             .attr('stroke', '#fff')
-            .attr('stroke-width', 2);
+            .attr('stroke-width', 2)
+            .attr('opacity', 1);
+        
+        // Reset edge selection
+        g.selectAll('.link')
+            .transition()
+            .duration(300)
+            .ease(d3.easeQuadOut)
+            .attr('stroke-opacity', 0.7)
+            .attr('stroke-width', d => d.thickness || calculateEdgeWeight(d));
         
         // Reset info panel
-        document.getElementById('file-info').innerHTML = '<p>Select a node to view details</p>';
+        document.getElementById('file-info').innerHTML = '<p>Select a node or edge to view details</p>';
     }
     
     // Tooltip functions
@@ -1353,7 +1632,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .attr('stroke-width', 2);
             
             // Reset info panel
-            document.getElementById('file-info').innerHTML = '<p>Select a node to view details</p>';
+            document.getElementById('file-info').innerHTML = '<p>Select a node or edge to view details</p>';
         }
     }
     
