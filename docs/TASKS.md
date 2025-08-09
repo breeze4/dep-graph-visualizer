@@ -92,12 +92,12 @@
 - [x] 9.6 Update existing panels to show real data instead of placeholders
 
 ### 10. UI Components - Controls and Filters
-- [ ] 10.1 Connect search input to filter nodes by name
-- [ ] 10.2 Connect min lines of code slider to filter nodes
-- [ ] 10.3 Connect node type checkboxes to show/hide apps, libs
-- [ ] 10.4 Connect toggle for showing/hiding node labels
-- [ ] 10.5 Connect reset view button to restore default zoom/pan
-- [ ] 10.6 Update graph statistics display with real counts
+- [x] 10.1 Connect search input to filter nodes by name
+- [x] 10.2 Connect min lines of code slider to filter nodes
+- [x] 10.3 Connect node type checkboxes to show/hide apps, libs
+- [x] 10.4 Connect toggle for showing/hiding node labels
+- [x] 10.5 Connect reset view button to restore default zoom/pan
+- [x] 10.6 Update graph statistics display with real counts
 
 ### 11. Data Flow Integration
 - [ ] 11.1 Update file upload to work with new graph structure
