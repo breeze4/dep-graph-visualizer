@@ -849,9 +849,8 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .attr('stroke-opacity', 0.7) // Increased for better visibility
             .attr('stroke-width', d => {
-                // Calculate edge weight based on both source and target connectivity
-                const edgeWeight = calculateEdgeWeight(d);
-                return edgeWeight;
+                // Use thickness based on dependency strength (count) if available
+                return d.thickness || calculateEdgeWeight(d);
             })
             .attr('fill', 'none')
             .attr('marker-end', d => {
@@ -866,7 +865,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Highlight edge on hover (CSS handles color change)
                 d3.select(this)
                     .attr('stroke-opacity', 0.9)
-                    .attr('stroke-width', Math.max(3, calculateEdgeWeight(d) * 1.5));
+                    .attr('stroke-width', Math.max(3, (d.thickness || calculateEdgeWeight(d)) * 1.5));
                 
                 // Show tooltip
                 showLinkTooltip(event, d);
@@ -1025,7 +1024,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Reset edge styling
             g.selectAll('.link')
                 .attr('stroke-opacity', 0.7)
-                .attr('stroke-width', linkData => calculateEdgeWeight(linkData));
+                .attr('stroke-width', linkData => linkData.thickness || calculateEdgeWeight(linkData));
             
             // Reset node opacity
             g.selectAll('.node').select('circle')

@@ -68,11 +68,11 @@
 - [x] 6.5 Implement basic edge rendering as lines
 
 ### 7. Graph Visualization - Visual Encoding
-- [ ] 7.1 Scale node size based on incoming dependencies count
-- [ ] 7.2 Add node coloring based on type (app=blue, lib=green, external=gray)
-- [ ] 7.3 Scale edge thickness based on dependency strength (count)
-- [ ] 7.4 Add directional arrows to edges pointing from importer to imported
-- [ ] 7.5 Add node labels showing module names
+- [x] 7.1 Scale node size based on incoming dependencies count
+- [x] 7.2 Add node coloring based on type (app=blue, lib=green, external=gray)
+- [x] 7.3 Scale edge thickness based on dependency strength (count)
+- [x] 7.4 Add directional arrows to edges pointing from importer to imported
+- [x] 7.5 Add node labels showing module names
 
 ### 8. Graph Visualization - Interactions
 - [ ] 8.1 Implement zoom and pan controls using d3.zoom()
