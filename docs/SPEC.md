@@ -1,197 +1,266 @@
-# Dependency Graph Visualizer - Specification
+Here’s a **merged and expanded spec** that integrates your existing SPEC with the new ideas you described earlier — it’s now a full end-to-end blueprint for building the dependency graph visualizer, including **features**, **workflows**, **UI behaviors**, **graph representation details**, and **technical implementation notes**.
 
-## Project Overview
+---
 
-A web application that visualizes dependency graphs using vanilla JavaScript frontend and Node.js backend.
+# Dependency Graph Visualizer – Full Specification
 
-## Architecture
+## **1. Project Overview**
 
-### Backend (Node.js + Express)
-- **Purpose**: Serve static files and provide API endpoints for dependency data
-- **Technology**: Node.js with Express framework
-- **Port**: 3000 (configurable via PORT environment variable)
-- **Static Files**: Serves frontend files from `/frontend` directory
+A tool for exploring, analyzing, and refactoring large Angular (or general TypeScript) monorepos by visualizing the dependency graph between modules, directories, and files.
+The goal is to:
 
-### Frontend (Vanilla JavaScript)
-- **Purpose**: Interactive web interface for dependency visualization
-- **Technology**: HTML5, CSS3, vanilla JavaScript
-- **Location**: `/frontend` directory
-- **Entry Point**: `index.html`
+* Identify **tightly coupled** and **loosely coupled** areas.
+* See **incoming** and **outgoing** dependencies.
+* Explore dependencies smoothly at multiple levels.
+* Extract potential **minimal interfaces** for sets of modules.
+* Provide deep links to files in IDE or GitHub.
 
-## Project Structure
+During development:
+* Use an example app in the same directory structure: `./example/example-app/src` contains an apps and libs directory structure that roughly resembles the type of codebase that will be analyzed.
 
-```
-dep-graph-visualizer/
-├── backend/
-│   ├── package.json
-│   └── server.js
-├── frontend/
-│   ├── index.html
-│   ├── styles.css
-│   └── script.js
-├── docs/
-│   └── SPEC.md
-└── .gitignore
-```
+---
 
-## Getting Started
+## **2. Architecture**
 
-1. Install dependencies: `cd backend && npm install`
-2. Start server: `npm start` or `npm run dev`
-3. Open browser to `http://localhost:3000`
+### **Backend (Node.js + Express)**
 
-## Development Guidelines
+* Serves static frontend files.
+* Provides an API to:
 
-- Keep frontend vanilla JavaScript (no frameworks)
-- Backend serves as static file server and API provider
-- Follow atomic, incremental development approach
-- Maintain functionality after each change
+  * Generate dependency graphs from a local codebase.
+  * Return JSON graph data for visualization.
+* Uses **TypeScript compiler API** or **ts-morph** to parse `.ts` files and extract imports.
+* Configurable port (default `3000`).
+* Can run in:
 
+  * **Static mode** – serves pre-generated JSON graphs.
+  * **Live analysis mode** – scans the codebase on request.
 
-## Features
+### **Frontend (Vanilla JS + D3.js)**
 
-### Core Functionality
-- Analyze JavaScript/TypeScript repositories to map internal dependency graphs
-- Perform depth-first directory traversal to build a recursive data structure
-- Trace imports in code files (excluding tests) to create dependency connections
-- Count lines of code for both production and test files
-- Ignore external packages (package.json dependencies) for now
+* Renders an interactive graph.
+* Supports **multi-level zoom** and **focus modes**.
+* Displays detail panels for nodes and edges.
+* Allows selection and grouping for **interface extraction**.
+* Entry point: `index.html`.
 
-### Data Analysis
-- Identify modules that are heavily depended upon
-- Track modules with many dependencies
-- Separate apps (diverse library collections with behavior) from libs (small related code groups)
-- Track 3rd party dependencies for each app/lib
+---
 
-### Graph representation
-This data structure is a **Dependency Graph** represented as a JSON object.
+## **3. Data Model**
 
--   The top-level keys are **strings**, each representing the unique relative path to a file (a **node** in the graph).
--   Each file node has a value which is an object containing two properties:
-    -   `imports`: An array of strings, where each string is a path to a file that the current file *depends on* (outgoing edges).
-    -   `importedBy`: An array of strings, where each string is a path to a file that *depends on* the current file (incoming edges).
+### **Graph Representation**
 
-Essentially, it's an adjacency list representation of a directed graph that explicitly stores both forward and reverse edges for every node, allowing for efficient bi-directional traversal.
+* Directed graph with explicit forward (`imports`) and reverse (`importedBy`) edges.
+* Supports both **file-level** and **module-level** aggregation.
 
-### Visualization Hierarchy
-- Top level: Show apps and libs separately
-- Apps display: size (code + test), 3P dependency count, libs used
-- Libs display: size (code + test), 3P dependencies, other lib dependencies
-- Drill-down navigation: apps/libs → modules → directories → files
-- Group modules by their package.json
-- Support visualization inside modules (e.g., for monolithic Angular apps)
-
-### Visual Elements
-- Draw connection lines between dependent modules
-- Visual indicators for dependency count (incoming/outgoing)
-- Code size representations
-- Show number of modules that depend on each module
-- Show number of modules each module depends on
-
-### Command Line Interface
-- Execute via: `node graph-main.js "./example/example-app/src"`
-- Automatically identify and separate apps and libs from the source path
-
-## Frontend D3 Graph Visualization Specification
-
-### Overview
-Interactive web application for visualizing JavaScript/TypeScript project dependency graphs using D3.js with drag-and-drop JSON file upload.
-
-### Core Features
-
-#### 1. File Upload Interface
-- **Drag & Drop Zone**: Large, prominent area for JSON file upload
-- **File Validation**: Parse and validate JSON structure against expected schema
-- **Error Handling**: Clear error messages for invalid files or malformed JSON
-- **Visual Feedback**: Loading states and success/error indicators
-
-#### 2. Graph Visualization (D3.js Force Layout)
-- **Node Representation**: 
-  - Circles for files, sized by lines of code
-  - Color coding: Apps (blue), Libs (green)
-  - Node labels showing file names (truncated if needed)
-- **Edge Representation**:
-  - Arrows showing import direction (A imports B)
-  - Edge thickness based on dependency strength
-- **Interactive Elements**:
-  - Pan and zoom capability
-  - Node dragging
-  - Hover tooltips with detailed info
-
-#### 3. Information Panel
-- **File Details**: Selected node shows:
-  - Full file path
-  - Lines of code
-  - Import count (outgoing dependencies)
-  - ImportedBy count (incoming dependencies)
-  - File type (app/lib)
-- **Graph Statistics**:
-  - Total files, apps, libs
-  - Most connected nodes
-  - Largest files
-
-#### 4. Controls & Filters
-- **Layout Controls**:
-  - Force simulation strength adjustment
-  - Reset zoom/position
-  - Toggle node labels on/off
-- **Filtering**:
-  - Show/hide apps vs libs
-  - Filter by file size threshold
-  - Search/highlight specific files
-
-#### 5. Visual Design
-- **Responsive Layout**: Works on desktop and tablet
-- **Clean UI**: Minimal interface focusing on the graph
-- **Accessibility**: Keyboard navigation, screen reader support
-- **Performance**: Smooth rendering for graphs with 50+ nodes
-
-### Technical Implementation
-
-#### Data Structure Expected
 ```json
 {
   "metadata": {
-    "generatedAt": "ISO timestamp",
-    "projectRoot": "path",
-    "stats": { "totalFiles": 0, "codeFiles": 0, "testFiles": 0 }
-  },
-  "graph": {
-    "file/path.ts": {
-      "imports": ["other/file.ts"],
-      "importedBy": ["dependent/file.ts"],
-      "linesOfCode": 50,
-      "isTest": false
+    "generatedAt": "2025-08-09T12:00:00Z",
+    "projectRoot": "/path/to/repo",
+    "stats": {
+      "totalFiles": 0,
+      "apps": 0,
+      "libs": 0
     }
-  }
+  },
+  "nodes": [
+    {
+      "id": "libs/util",
+      "type": "lib",
+      "linesOfCode": 450,
+      "fileCount": 12,
+      "incomingCount": 8,
+      "outgoingCount": 3
+    }
+  ],
+  "edges": [
+    {
+      "from": "apps/dashboard",
+      "to": "libs/util",
+      "count": 5,
+      "symbols": ["formatDate", "parseDate"]
+    }
+  ]
 }
 ```
 
-#### D3 Components
-- **Force Simulation**: `d3.forceSimulation()` with collision detection
-- **SVG Rendering**: Scalable graphics with zoom/pan transforms
-- **Event Handling**: Mouse/touch interactions for node manipulation
+**Node Attributes:**
 
-#### Validation Logic
-- Check JSON structure matches expected schema
-- Verify all imported files exist in the graph
-- Validate numeric fields (linesOfCode > 0)
-- Ensure bidirectional consistency (A imports B ↔ B importedBy A)
+* `id`: unique path or module identifier.
+* `type`: `"app" | "lib" | "external"`.
+* `linesOfCode`: sum of code lines in this node.
+* `fileCount`: number of files in this node.
+* `incomingCount`: number of unique modules that depend on it.
+* `outgoingCount`: number of unique modules it depends on.
 
-### User Flow
-1. **Landing**: User sees upload zone and instructions
-2. **Upload**: Drag JSON file or click to browse
-3. **Validation**: File is parsed and validated with feedback as its loading
-4. **Visualization**: Graph renders with default layout
-5. **Interaction**: User explores nodes, views details, adjusts layout
-6. **Analysis**: User gains insights from dependency patterns
+**Edge Attributes:**
 
-### Error States
-- **Invalid JSON**: Show parsing error with line number
-- **Wrong Schema**: Highlight missing/incorrect fields
-- **Empty Graph**: Handle edge case of no dependencies
-- **Large Files**: Performance warnings for 100+ node graphs
+* `from` / `to`: node IDs.
+* `count`: number of distinct importing files.
+* `symbols`: array of imported identifiers.
 
-### Future features:
-* External modules graph, put together a list of all external package imports/dependencies
+---
 
+## **4. Graph Generation Process**
+
+1. **Codebase traversal**
+
+   * Scan specific app directory within `apps/` and the entire `libs/` directories recursively.
+   * Group files into **modules** by directory/package.json or Angular NgModule boundary.
+
+2. **Dependency extraction**
+
+   * Parse imports with `ts-morph`.
+   * Ignore test files (configurable).
+   * Map imports to absolute project paths.
+   * Aggregate identical `from→to` imports into a single edge with a count.
+
+3. **Stats collection**
+
+   * Lines of code.
+   * Incoming/outgoing dependency counts.
+   * 3rd party package usage.
+
+4. **Output**
+
+   * Save to `.json` for visualization.
+
+---
+
+## **5. User Workflows**
+
+### **5.1 Load & Explore Graph**
+
+1. Drag & drop JSON into the app. During development it should auto-load a fixed reference to a created JSON file, so that its easier to refresh the page and see updates.
+2. Graph renders with the app and libs as root-level clusters.
+3. Pan, zoom, and select nodes to explore.
+
+### **5.2 Drill-down Navigation**
+
+* **Zoom**:
+
+  * Scrollwheel = zoom in/out.
+  * Click a node = focus mode.
+  * Focus mode shows node + its immediate incoming/outgoing neighbors.
+  * [future] “Go one level deeper” button to reveal neighbors’ neighbors.
+* **Collapse/expand**:
+
+  * Collapse subtrees to declutter.
+  * Expand back on demand.
+
+### **5.3 Dependency Analysis**
+
+* Click node → side panel shows:
+
+  * What imports it.
+  * What it imports.
+  * Counts grouped by import path.
+  * [future] Deep link to source (`vscode://` or GitHub).
+* Click edge → panel shows:
+
+  * Importing files.
+  * Imported symbols.
+  * Counts.
+
+### **5.4 Interface Extraction**
+
+1. Select an **importer** node.
+2. Multi-select **imported** nodes (shift-click).
+3. Tool aggregates their exported members:
+
+   * Intersection set (shared).
+   * Union set (full list).
+4. Option to copy interface suggestion or [future] send to LLM for refinement.
+
+---
+
+## **6. UI & Interaction**
+
+### **Graph View**
+
+* **Node size** = incoming dependency count.
+* **Node color**:
+
+  * App = blue
+  * Lib = green
+  * External = gray
+* **Edge thickness** = number of unique importers.
+* Hover node/edge → show tooltip with summary.
+* Smooth zoom/pan transitions.
+* Lazy-load rendering for large graphs.
+
+### **Information Panel**
+
+* Always visible on right side.
+* Tabs:
+
+  * **Node details**
+  * **Edge details**
+  * **Interface extraction**
+* Search bar for filtering.
+
+### **Controls**
+
+* Toggle incoming/outgoing edges.
+* Filter by dependency count, node type.
+* Reset graph layout.
+
+---
+
+## **7. Technical Implementation (D3)**
+
+### **Force Layout**
+
+* Force simulation graph
+* Collision detection to prevent overlaps.
+* Zoom with `d3.zoom()`.
+
+### **Representing Relative dependency strength***
+
+#### Edge Representation
+
+* **Direction**: Arrows point from the importing file to the imported file (A → B means A imports B).
+* **Thickness Scaling**:
+
+  * The `stroke-width` of the line is proportional to the *dependency strength*.
+  * **Dependency strength** = number of distinct symbols imported or frequency of imports between two files (configurable metric).
+  * Thicker lines indicate stronger/more significant dependencies.
+  * Minimum thickness (light weight) for weak dependencies to keep them visible without overpowering the graph.
+* **Color**: Subtle neutral tone (e.g., gray) to keep focus on nodes; arrowheads slightly darker for visibility.
+
+#### Example Scaling Rule
+
+```js
+const maxStrength = d3.max(edges, e => e.strength);
+const thicknessScale = d3.scaleLinear()
+  .domain([1, maxStrength])
+  .range([1, 6]); // px stroke width
+```
+
+Applied in the edge rendering:
+
+```js
+edgeSelection
+  .attr("stroke-width", d => thicknessScale(d.strength));
+```
+
+#### Visual Result
+
+* Strong dependencies are visually prominent (bold, thick lines).
+* Weak dependencies fade into the background but remain visible for context.
+* Node positions are determined purely by the force simulation, not by dependency strength — preventing distortions in layout.
+
+### **Performance**
+
+* For >500 nodes, use WebGL-based rendering (`d3-force-3d` + `PixiJS`).
+* Virtualize side panel lists for large datasets.
+
+---
+
+## **8. Future Extensions**
+
+* 3rd party dependency map.
+* “What if I change this module?” breakage prediction.
+* Save/load selection states.
+* Auto-generate LLM prompts for interface design.
