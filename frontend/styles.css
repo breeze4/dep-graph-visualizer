@@ -192,6 +192,156 @@ main {
     }
 }
 
+/* Multi-select indicator */
+.multi-select-indicator {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: #9b59b6;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 1000;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideInBottom 0.3s ease-out;
+}
+
+.multi-icon {
+    font-size: 16px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.multi-text {
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.multi-count {
+    background: rgba(255,255,255,0.2);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+@keyframes slideInBottom {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Multi-select mode styling */
+.multi-select-mode .node circle {
+    cursor: crosshair;
+}
+
+/* Interface extraction panel */
+.interface-extraction {
+    padding: 0.5rem 0;
+}
+
+.selected-modules {
+    margin: 0.5rem 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.module-tag {
+    background: #3498db;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.interface-results {
+    margin: 1rem 0;
+}
+
+.interface-results h5 {
+    margin: 0.75rem 0 0.25rem 0;
+    color: #2c3e50;
+    font-size: 13px;
+}
+
+.interface-section {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.interface-list {
+    margin: 0;
+    padding-left: 1rem;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.interface-list li {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: #2c3e50;
+    padding: 1px 0;
+}
+
+.more-items {
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+.no-results {
+    color: #7f8c8d;
+    font-style: italic;
+    margin: 0;
+    font-size: 12px;
+}
+
+.interface-actions {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e0e6ed;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Temporary message */
+.temp-message {
+    position: fixed;
+    top: 50px;
+    right: 20px;
+    padding: 10px 15px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 1000;
+    font-size: 13px;
+    font-weight: 500;
+    animation: slideIn 0.3s ease-out;
+}
+
+.temp-message.success {
+    background: #27ae60;
+    color: white;
+}
+
+.temp-message.error {
+    background: #e74c3c;
+    color: white;
+}
+
 /* Upload Zone Styles */
 .upload-zone {
     padding: 3rem;

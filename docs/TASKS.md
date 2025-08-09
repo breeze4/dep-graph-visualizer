@@ -116,8 +116,8 @@
 - [x] 12.5 Verify debouncing works for search and filter inputs
 
 ### 13. Interface Extraction Feature
-- [ ] 13.1 Add shift key detection for multi-select mode
-- [ ] 13.2 Implement selection state management for multiple nodes
-- [ ] 13.3 Create interface extraction logic that aggregates exports
-- [ ] 13.4 Add interface extraction panel to UI
-- [ ] 13.5 Implement copy-to-clipboard for extracted interface
+- [x] 13.1 Add shift key detection for multi-select mode
+- [x] 13.2 Implement selection state management for multiple nodes
+- [x] 13.3 Create interface extraction logic that aggregates exports
+- [x] 13.4 Add interface extraction panel to UI
+- [x] 13.5 Implement copy-to-clipboard for extracted interface

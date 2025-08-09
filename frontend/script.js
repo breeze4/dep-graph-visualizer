@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize event listeners
     initializeUploadHandlers();
     initializeControlHandlers();
+    initializeKeyboardHandlers();
     
     // Auto-load default dependency graph for development
     loadDefaultGraph();
@@ -99,6 +100,38 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (collapseImported) collapseImported.addEventListener('click', () => togglePanel('most-imported-panel', 'collapse-imported'));
         if (collapseExports) collapseExports.addEventListener('click', () => togglePanel('most-exports-panel', 'collapse-exports'));
+    }
+    
+    function initializeKeyboardHandlers() {
+        // Global keyboard event listeners for multi-select mode
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Shift') {
+                isShiftPressed = true;
+                multiSelectMode = true;
+                document.body.classList.add('multi-select-mode');
+                updateMultiSelectIndicator(true);
+            }
+            if (event.key === 'Escape') {
+                clearMultiSelection();
+            }
+        });
+        
+        document.addEventListener('keyup', function(event) {
+            if (event.key === 'Shift') {
+                isShiftPressed = false;
+                multiSelectMode = false;
+                document.body.classList.remove('multi-select-mode');
+                updateMultiSelectIndicator(false);
+            }
+        });
+        
+        // Prevent default behavior on window blur to clean up state
+        window.addEventListener('blur', function() {
+            isShiftPressed = false;
+            multiSelectMode = false;
+            document.body.classList.remove('multi-select-mode');
+            updateMultiSelectIndicator(false);
+        });
     }
     
     // Drag and drop event handlers
@@ -1113,7 +1146,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add click and hover functionality for nodes
         node.on('click', function(event, d) {
-            selectNode(d);
+            event.stopPropagation();
+            
+            if (multiSelectMode) {
+                toggleNodeSelection(d);
+            } else {
+                // Clear any existing multi-selection
+                clearMultiSelection();
+                selectNode(d);
+            }
         })
         .on('mouseenter', function(event, d) {
             // Highlight node on hover
@@ -1198,6 +1239,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let focusedNode = null;
     let connectionFocusMode = false;
     let focusedConnection = null;
+    let multiSelectMode = false;
+    let selectedNodes = new Set();
+    let isShiftPressed = false;
 
     function selectNode(nodeData) {
         // Update info panel with node details
@@ -1233,21 +1277,257 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         
         // Highlight selected node with smooth transitions
+        if (selectedNodes.size === 0) {
+            // Single selection mode
+            g.selectAll('.node circle')
+                .transition()
+                .duration(300)
+                .ease(d3.easeQuadOut)
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 2);
+            
+            g.selectAll('.node')
+                .filter(d => d.id === nodeData.id)
+                .select('circle')
+                .transition()
+                .duration(300)
+                .ease(d3.easeQuadOut)
+                .attr('stroke', '#e74c3c')
+                .attr('stroke-width', 4);
+        }
+    }
+    
+    function toggleNodeSelection(nodeData) {
+        if (selectedNodes.has(nodeData.id)) {
+            selectedNodes.delete(nodeData.id);
+        } else {
+            selectedNodes.add(nodeData.id);
+        }
+        
+        updateMultiSelectionVisual();
+        updateMultiSelectionPanel();
+    }
+    
+    function clearMultiSelection() {
+        selectedNodes.clear();
+        updateMultiSelectionVisual();
+        updateMultiSelectionPanel();
+    }
+    
+    function updateMultiSelectionVisual() {
+        // Update node styling based on selection state
         g.selectAll('.node circle')
             .transition()
-            .duration(300)
+            .duration(200)
             .ease(d3.easeQuadOut)
-            .attr('stroke', '#fff')
-            .attr('stroke-width', 2);
+            .attr('stroke', d => {
+                if (selectedNodes.has(d.id)) {
+                    return '#e74c3c'; // Selected color
+                }
+                return '#fff'; // Default color
+            })
+            .attr('stroke-width', d => {
+                if (selectedNodes.has(d.id)) {
+                    return 4; // Thicker border for selected
+                }
+                return 2; // Default width
+            });
         
-        g.selectAll('.node')
-            .filter(d => d.id === nodeData.id)
-            .select('circle')
-            .transition()
-            .duration(300)
-            .ease(d3.easeQuadOut)
-            .attr('stroke', '#e74c3c')
-            .attr('stroke-width', 4);
+        // Update the count in the indicator if it exists
+        const indicator = document.querySelector('.multi-select-indicator');
+        if (indicator && indicator.updateCount) {
+            indicator.updateCount();
+        }
+    }
+    
+    function updateMultiSelectionPanel() {
+        if (selectedNodes.size === 0) {
+            // Show default panel
+            document.getElementById('file-info').innerHTML = '<p>Select a node or edge to view details</p>';
+            return;
+        }
+        
+        if (selectedNodes.size === 1) {
+            // Show single node details
+            const nodeId = selectedNodes.values().next().value;
+            const nodeData = nodes.find(n => n.id === nodeId);
+            if (nodeData) {
+                selectNode(nodeData);
+            }
+            return;
+        }
+        
+        // Show multi-selection interface extraction panel
+        showInterfaceExtractionPanel();
+    }
+    
+    function showInterfaceExtractionPanel() {
+        const selectedNodesList = Array.from(selectedNodes).map(id => nodes.find(n => n.id === id)).filter(Boolean);
+        
+        if (selectedNodesList.length < 2) {
+            document.getElementById('file-info').innerHTML = '<p>Select at least 2 nodes for interface extraction</p>';
+            return;
+        }
+        
+        // Extract interface information
+        const interfaceData = extractInterface(selectedNodesList);
+        
+        const fileInfo = document.getElementById('file-info');
+        fileInfo.innerHTML = `
+            <div class="interface-extraction">
+                <h4>Interface Extraction</h4>
+                <p><strong>Selected Modules:</strong> ${selectedNodes.size}</p>
+                <div class="selected-modules">
+                    ${selectedNodesList.map(node => 
+                        `<span class="module-tag">${node.name}</span>`
+                    ).join('')}
+                </div>
+                
+                <div class="interface-results">
+                    <h5>Common Dependencies (Intersection)</h5>
+                    <div class="interface-section">
+                        ${interfaceData.intersection.length > 0 ? `
+                            <ul class="interface-list">
+                                ${interfaceData.intersection.map(dep => `<li>${dep}</li>`).join('')}
+                            </ul>
+                        ` : '<p class="no-results">No common dependencies found</p>'}
+                    </div>
+                    
+                    <h5>All Dependencies (Union)</h5>
+                    <div class="interface-section">
+                        ${interfaceData.union.length > 0 ? `
+                            <ul class="interface-list">
+                                ${interfaceData.union.slice(0, 20).map(dep => `<li>${dep}</li>`).join('')}
+                                ${interfaceData.union.length > 20 ? `<li class="more-items">... and ${interfaceData.union.length - 20} more</li>` : ''}
+                            </ul>
+                        ` : '<p class="no-results">No dependencies found</p>'}
+                    </div>
+                </div>
+                
+                <div class="interface-actions">
+                    <button class="action-btn" onclick="copyInterfaceToClipboard()">
+                        📋 Copy Interface
+                    </button>
+                    <button class="action-btn" onclick="clearMultiSelection()">
+                        ✖ Clear Selection
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    function extractInterface(selectedNodes) {
+        const allDependencies = new Map(); // dependency -> count
+        const nodeDependencies = []; // array of dependency sets
+        
+        // Collect all dependencies from selected nodes
+        selectedNodes.forEach(node => {
+            const deps = new Set([...node.imports, ...node.importedBy]);
+            nodeDependencies.push(deps);
+            
+            deps.forEach(dep => {
+                allDependencies.set(dep, (allDependencies.get(dep) || 0) + 1);
+            });
+        });
+        
+        // Calculate intersection (dependencies common to ALL nodes)
+        const intersection = [];
+        if (nodeDependencies.length > 0) {
+            for (const [dep, count] of allDependencies.entries()) {
+                if (count === selectedNodes.length) {
+                    intersection.push(dep);
+                }
+            }
+        }
+        
+        // Calculate union (all unique dependencies)
+        const union = Array.from(allDependencies.keys());
+        
+        return {
+            intersection: intersection.sort(),
+            union: union.sort(),
+            stats: {
+                totalSelected: selectedNodes.length,
+                commonDeps: intersection.length,
+                totalDeps: union.length
+            }
+        };
+    }
+    
+    function copyInterfaceToClipboard() {
+        const selectedNodesList = Array.from(selectedNodes).map(id => nodes.find(n => n.id === id)).filter(Boolean);
+        const interfaceData = extractInterface(selectedNodesList);
+        
+        const interfaceText = `
+// Interface Extraction Result
+// Selected Modules: ${selectedNodesList.map(n => n.name).join(', ')}
+
+// Common Dependencies (Intersection):
+${interfaceData.intersection.length > 0 ? 
+    interfaceData.intersection.map(dep => `// - ${dep}`).join('\n') : 
+    '// No common dependencies found'
+}
+
+// All Dependencies (Union):
+${interfaceData.union.map(dep => `// - ${dep}`).join('\n')}
+
+// Statistics:
+// - Selected modules: ${interfaceData.stats.totalSelected}
+// - Common dependencies: ${interfaceData.stats.commonDeps}
+// - Total unique dependencies: ${interfaceData.stats.totalDeps}
+        `.trim();
+        
+        navigator.clipboard.writeText(interfaceText).then(() => {
+            showTemporaryMessage('Interface copied to clipboard!');
+        }).catch(err => {
+            console.error('Failed to copy to clipboard:', err);
+            showTemporaryMessage('Failed to copy to clipboard', true);
+        });
+    }
+    
+    function showTemporaryMessage(message, isError = false) {
+        // Remove any existing message
+        const existing = document.querySelector('.temp-message');
+        if (existing) existing.remove();
+        
+        const messageEl = document.createElement('div');
+        messageEl.className = `temp-message ${isError ? 'error' : 'success'}`;
+        messageEl.textContent = message;
+        document.body.appendChild(messageEl);
+        
+        setTimeout(() => {
+            if (messageEl.parentNode) {
+                messageEl.remove();
+            }
+        }, 3000);
+    }
+    
+    function updateMultiSelectIndicator(isActive) {
+        // Remove any existing indicator
+        const existing = document.querySelector('.multi-select-indicator');
+        if (existing) existing.remove();
+        
+        if (isActive) {
+            const indicator = document.createElement('div');
+            indicator.className = 'multi-select-indicator';
+            indicator.innerHTML = `
+                <span class="multi-icon">⌘</span>
+                <span class="multi-text">Multi-select mode: Click nodes to select multiple</span>
+                <span class="multi-count">${selectedNodes.size} selected</span>
+            `;
+            document.body.appendChild(indicator);
+            
+            // Update count when selection changes
+            const updateCount = () => {
+                const countSpan = indicator.querySelector('.multi-count');
+                if (countSpan) {
+                    countSpan.textContent = `${selectedNodes.size} selected`;
+                }
+            };
+            
+            // Store update function for later use
+            indicator.updateCount = updateCount;
+        }
     }
     
     function toggleFocusMode(nodeId) {
@@ -1750,6 +2030,8 @@ document.addEventListener('DOMContentLoaded', function() {
     window.toggleHighlightPath = toggleHighlightPath;
     window.toggleConnectionFocus = toggleConnectionFocus;
     window.isPathHighlighted = isPathHighlighted;
+    window.copyInterfaceToClipboard = copyInterfaceToClipboard;
+    window.clearMultiSelection = clearMultiSelection;
     
     function resetGraphView() {
         // Exit focus mode if active
@@ -1764,6 +2046,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Clear path highlights
         clearAllHighlights();
+        
+        // Clear multi-selection
+        clearMultiSelection();
         
         if (svg && zoom) {
             svg.transition()
