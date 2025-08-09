@@ -575,24 +575,36 @@ function analyzeDirectories(appDir, libsDir) {
     // Generate output - write to frontend directory
     const outputPath = path.join(__dirname, '..', 'frontend', 'dependency-graph.json');
     
-    // Convert modules to the interim format (still keeping old structure for now)
-    const moduleGraph = {};
+    // Transform to spec format with nodes and edges arrays
+    const nodes = [];
+    const edges = [];
     
+    // Create nodes array
     for (const [moduleId, module] of modules) {
         const deps = moduleDependencies.get(moduleId);
-        moduleGraph[moduleId] = {
+        
+        nodes.push({
             id: moduleId,
             type: module.type,
             linesOfCode: module.linesOfCode,
             fileCount: module.fileCount,
-            imports: Array.from(deps.imports),
-            importedBy: Array.from(deps.importedBy),
-            importDetails: Array.from(deps.importDetails.entries()).map(([targetId, detail]) => ({
-                module: targetId,
-                symbols: Array.from(detail.symbols),
-                count: detail.count
-            }))
-        };
+            incomingCount: deps.importedBy.size,
+            outgoingCount: deps.imports.size
+        });
+    }
+    
+    // Create edges array
+    for (const [moduleId, module] of modules) {
+        const deps = moduleDependencies.get(moduleId);
+        
+        for (const [targetModuleId, importDetail] of deps.importDetails) {
+            edges.push({
+                from: moduleId,
+                to: targetModuleId,
+                count: importDetail.count,
+                symbols: Array.from(importDetail.symbols)
+            });
+        }
     }
     
     // Count apps and libs
@@ -616,7 +628,8 @@ function analyzeDirectories(appDir, libsDir) {
                 totalModules: modules.size
             }
         },
-        modules: moduleGraph
+        nodes: nodes,
+        edges: edges
     };
     
     fs.writeFileSync(outputPath, JSON.stringify(output, null, 2));

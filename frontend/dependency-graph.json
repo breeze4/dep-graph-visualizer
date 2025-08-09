@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generatedAt": "2025-08-09T17:04:54.690Z",
+    "generatedAt": "2025-08-09T17:07:01.760Z",
     "projectRoot": "/mnt/d/dev/_ws/dep-graph-visualizer/example/example-app/src",
     "appDirectory": "/mnt/d/dev/_ws/dep-graph-visualizer/example/example-app/src/apps",
     "libsDirectory": "/mnt/d/dev/_ws/dep-graph-visualizer/example/example-app/src/libs",
@@ -15,215 +15,177 @@
       "totalModules": 8
     }
   },
-  "modules": {
-    "apps/dashboard": {
+  "nodes": [
+    {
       "id": "apps/dashboard",
       "type": "app",
       "linesOfCode": 43,
       "fileCount": 1,
-      "imports": [
-        "libs/api",
-        "libs/utils",
-        "libs/logger"
-      ],
-      "importedBy": [
-        "apps/main"
-      ],
-      "importDetails": [
-        {
-          "module": "libs/api",
-          "symbols": [
-            "api"
-          ],
-          "count": 1
-        },
-        {
-          "module": "libs/utils",
-          "symbols": [
-            "formatNumber"
-          ],
-          "count": 1
-        },
-        {
-          "module": "libs/logger",
-          "symbols": [
-            "Logger"
-          ],
-          "count": 1
-        }
-      ]
+      "incomingCount": 1,
+      "outgoingCount": 3
     },
-    "apps/main": {
+    {
       "id": "apps/main",
       "type": "app",
       "linesOfCode": 27,
       "fileCount": 1,
-      "imports": [
-        "libs/counter",
-        "apps/dashboard",
-        "apps/user-profile"
-      ],
-      "importedBy": [],
-      "importDetails": [
-        {
-          "module": "libs/counter",
-          "symbols": [
-            "setupCounter"
-          ],
-          "count": 1
-        },
-        {
-          "module": "apps/dashboard",
-          "symbols": [
-            "default"
-          ],
-          "count": 1
-        },
-        {
-          "module": "apps/user-profile",
-          "symbols": [
-            "createProfile"
-          ],
-          "count": 1
-        }
-      ]
+      "incomingCount": 0,
+      "outgoingCount": 3
     },
-    "apps/user-profile": {
+    {
       "id": "apps/user-profile",
       "type": "app",
       "linesOfCode": 54,
       "fileCount": 1,
-      "imports": [
-        "libs/api",
-        "libs/validators",
-        "libs/logger"
-      ],
-      "importedBy": [
-        "apps/main"
-      ],
-      "importDetails": [
-        {
-          "module": "libs/api",
-          "symbols": [
-            "api"
-          ],
-          "count": 1
-        },
-        {
-          "module": "libs/validators",
-          "symbols": [
-            "isEmail",
-            "sanitizeInput"
-          ],
-          "count": 1
-        },
-        {
-          "module": "libs/logger",
-          "symbols": [
-            "Logger"
-          ],
-          "count": 1
-        }
-      ]
+      "incomingCount": 1,
+      "outgoingCount": 3
     },
-    "libs/api": {
+    {
       "id": "libs/api",
       "type": "lib",
       "linesOfCode": 28,
       "fileCount": 1,
-      "imports": [
-        "libs/logger"
-      ],
-      "importedBy": [
-        "apps/dashboard",
-        "apps/user-profile"
-      ],
-      "importDetails": [
-        {
-          "module": "libs/logger",
-          "symbols": [
-            "defaultLogger"
-          ],
-          "count": 1
-        }
-      ]
+      "incomingCount": 2,
+      "outgoingCount": 1
     },
-    "libs/counter": {
+    {
       "id": "libs/counter",
       "type": "lib",
       "linesOfCode": 14,
       "fileCount": 1,
-      "imports": [
-        "libs/utils",
-        "libs/logger"
-      ],
-      "importedBy": [
-        "apps/main"
-      ],
-      "importDetails": [
-        {
-          "module": "libs/utils",
-          "symbols": [
-            "formatNumber"
-          ],
-          "count": 1
-        },
-        {
-          "module": "libs/logger",
-          "symbols": [
-            "defaultLogger"
-          ],
-          "count": 1
-        }
-      ]
+      "incomingCount": 1,
+      "outgoingCount": 2
     },
-    "libs/logger": {
+    {
       "id": "libs/logger",
       "type": "lib",
       "linesOfCode": 23,
       "fileCount": 1,
-      "imports": [],
-      "importedBy": [
-        "apps/dashboard",
-        "apps/user-profile",
-        "libs/api",
-        "libs/counter"
-      ],
-      "importDetails": []
+      "incomingCount": 4,
+      "outgoingCount": 0
     },
-    "libs/utils": {
+    {
       "id": "libs/utils",
       "type": "lib",
       "linesOfCode": 13,
       "fileCount": 1,
-      "imports": [],
-      "importedBy": [
-        "apps/dashboard",
-        "libs/counter",
-        "libs/validators"
-      ],
-      "importDetails": []
+      "incomingCount": 3,
+      "outgoingCount": 0
     },
-    "libs/validators": {
+    {
       "id": "libs/validators",
       "type": "lib",
       "linesOfCode": 17,
       "fileCount": 1,
-      "imports": [
-        "libs/utils"
-      ],
-      "importedBy": [
-        "apps/user-profile"
-      ],
-      "importDetails": [
-        {
-          "module": "libs/utils",
-          "symbols": [
-            "clamp"
-          ],
-          "count": 1
-        }
+      "incomingCount": 1,
+      "outgoingCount": 1
+    }
+  ],
+  "edges": [
+    {
+      "from": "apps/dashboard",
+      "to": "libs/api",
+      "count": 1,
+      "symbols": [
+        "api"
+      ]
+    },
+    {
+      "from": "apps/dashboard",
+      "to": "libs/utils",
+      "count": 1,
+      "symbols": [
+        "formatNumber"
+      ]
+    },
+    {
+      "from": "apps/dashboard",
+      "to": "libs/logger",
+      "count": 1,
+      "symbols": [
+        "Logger"
+      ]
+    },
+    {
+      "from": "apps/main",
+      "to": "libs/counter",
+      "count": 1,
+      "symbols": [
+        "setupCounter"
+      ]
+    },
+    {
+      "from": "apps/main",
+      "to": "apps/dashboard",
+      "count": 1,
+      "symbols": [
+        "default"
+      ]
+    },
+    {
+      "from": "apps/main",
+      "to": "apps/user-profile",
+      "count": 1,
+      "symbols": [
+        "createProfile"
+      ]
+    },
+    {
+      "from": "apps/user-profile",
+      "to": "libs/api",
+      "count": 1,
+      "symbols": [
+        "api"
+      ]
+    },
+    {
+      "from": "apps/user-profile",
+      "to": "libs/validators",
+      "count": 1,
+      "symbols": [
+        "isEmail",
+        "sanitizeInput"
+      ]
+    },
+    {
+      "from": "apps/user-profile",
+      "to": "libs/logger",
+      "count": 1,
+      "symbols": [
+        "Logger"
+      ]
+    },
+    {
+      "from": "libs/api",
+      "to": "libs/logger",
+      "count": 1,
+      "symbols": [
+        "defaultLogger"
+      ]
+    },
+    {
+      "from": "libs/counter",
+      "to": "libs/utils",
+      "count": 1,
+      "symbols": [
+        "formatNumber"
+      ]
+    },
+    {
+      "from": "libs/counter",
+      "to": "libs/logger",
+      "count": 1,
+      "symbols": [
+        "defaultLogger"
+      ]
+    },
+    {
+      "from": "libs/validators",
+      "to": "libs/utils",
+      "count": 1,
+      "symbols": [
+        "clamp"
       ]
     }
-  }
+  ]
 }

@@ -50,15 +50,15 @@
 - [x] 4.5 Add node type classification (app/lib/external) based on path
 
 ### 5. Graph Generation CLI Tool - Graph Structure
-- [ ] 5.1 Transform current graph structure to spec format with nodes and edges arrays
-- [ ] 5.2 Add node attributes: id, type, linesOfCode, fileCount
-- [ ] 5.3 Create edges array with from, to attributes
-- [ ] 5.4 Add symbols array to each edge
-- [ ] 5.5 Implement edge aggregation that combines duplicate module imports with counts
-- [ ] 5.6 Calculate incoming dependency counts for each module
-- [ ] 5.7 Calculate outgoing dependency counts for each module
-- [ ] 5.8 Add incomingCount and outgoingCount to node attributes
-- [ ] 5.9 Update metadata section to include apps and libs counts
+- [x] 5.1 Transform current graph structure to spec format with nodes and edges arrays
+- [x] 5.2 Add node attributes: id, type, linesOfCode, fileCount
+- [x] 5.3 Create edges array with from, to attributes
+- [x] 5.4 Add symbols array to each edge
+- [x] 5.5 Implement edge aggregation that combines duplicate module imports with counts
+- [x] 5.6 Calculate incoming dependency counts for each module
+- [x] 5.7 Calculate outgoing dependency counts for each module
+- [x] 5.8 Add incomingCount and outgoingCount to node attributes
+- [x] 5.9 Update metadata section to include apps and libs counts
 
 ### 6. Graph Visualization - Basic Setup
 - [ ] 6.1 Create D3 force simulation initialization
