@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentGraphData = null;
     let currentSimulation = null;
     let graphDataCache = new Map(); // Cache for parsed graph data
+    let performanceMode = false; // Enable optimizations for large graphs
+    let nodeVirtualization = false; // Enable node virtualization
     
     // DOM elements
     const dropZone = document.getElementById('drop-zone');
@@ -814,8 +816,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function renderGraph(graphData) {
+        const startTime = performance.now();
+        console.log(`Rendering graph with ${graphData.nodes.length} nodes and ${graphData.links.length} edges`);
+        
         nodes = graphData.nodes;
         links = graphData.links;
+        
+        // Determine if we need performance optimizations
+        const nodeCount = nodes.length;
+        const edgeCount = links.length;
+        performanceMode = nodeCount > 200 || edgeCount > 500;
+        nodeVirtualization = nodeCount > 500;
+        
+        if (performanceMode) {
+            console.log('Enabling performance mode for large graph');
+            showPerformanceIndicator(`Performance mode enabled (${nodeCount} nodes, ${edgeCount} edges)`);
+        }
+        if (nodeVirtualization) {
+            console.log('Enabling node virtualization for very large graph');
+            showPerformanceIndicator(`Virtualization enabled (${nodeCount} nodes)`);
+        }
         
         // Clear existing elements
         g.selectAll('.link').remove();
@@ -968,81 +988,120 @@ document.addEventListener('DOMContentLoaded', function() {
             .attr('stroke-width', 2)
             .style('cursor', 'pointer');
         
-        // Add labels to nodes with enhanced formatting
-        node.append('text')
-            .text(d => {
-                // Truncate long names based on node size
-                const maxLength = Math.max(8, Math.min(15, d.size / 3));
-                return d.name.length > maxLength ? 
-                    d.name.substring(0, maxLength - 2) + '..' : 
-                    d.name;
-            })
-            .attr('dy', d => d.size > 25 ? '0.35em' : `${d.size + 12}px`) // Position based on node size
-            .attr('text-anchor', 'middle')
-            .attr('font-family', 'Segoe UI, sans-serif')
-            .attr('font-size', d => `${Math.max(9, Math.min(12, d.size / 4))}px`) // Dynamic font size
-            .attr('fill', d => d.size > 25 ? '#fff' : '#333') // White text for large nodes
-            .attr('font-weight', d => d.size > 30 ? 'bold' : 'normal')
-            .attr('pointer-events', 'none')
-            .attr('class', 'node-label');
+        // Add labels to nodes with performance optimization
+        if (!nodeVirtualization) {
+            node.append('text')
+                .text(d => {
+                    if (performanceMode) {
+                        // Show fewer labels in performance mode
+                        return d.incomingCount > 2 ? d.name.substring(0, 8) + '..' : '';
+                    }
+                    // Truncate long names based on node size
+                    const maxLength = Math.max(8, Math.min(15, d.size / 3));
+                    return d.name.length > maxLength ? 
+                        d.name.substring(0, maxLength - 2) + '..' : 
+                        d.name;
+                })
+                .attr('dy', d => d.size > 25 ? '0.35em' : `${d.size + 12}px`) // Position based on node size
+                .attr('text-anchor', 'middle')
+                .attr('font-family', 'Segoe UI, sans-serif')
+                .attr('font-size', d => `${Math.max(9, Math.min(12, d.size / 4))}px`) // Dynamic font size
+                .attr('fill', d => d.size > 25 ? '#fff' : '#333') // White text for large nodes
+                .attr('font-weight', d => d.size > 30 ? 'bold' : 'normal')
+                .attr('pointer-events', 'none')
+                .attr('class', 'node-label');
+        } else {
+            console.log('Skipping node labels for virtualization performance');
+        }
         
-        // Initialize force simulation with enhanced parameters
+        // Initialize force simulation with performance-optimized parameters
+        const linkStrength = performanceMode ? 0.1 : 0.3;
+        const chargeStrength = performanceMode ? -100 : -200;
+        const alphaDecay = performanceMode ? 0.05 : 0.02;
+        const velocityDecay = performanceMode ? 0.4 : 0.3;
+        
         currentSimulation = d3.forceSimulation(nodes)
             .force('link', d3.forceLink(links)
                 .id(d => d.id)
                 .distance(d => {
+                    if (performanceMode) {
+                        // Simplified distance calculation for performance
+                        return 50;
+                    }
                     // Adjust distance based on node sizes
                     const sourceSize = d.source.size || 20;
                     const targetSize = d.target.size || 20;
                     return Math.max(80, (sourceSize + targetSize) * 1.5);
                 })
-                .strength(0.3)
+                .strength(linkStrength)
             )
             .force('charge', d3.forceManyBody()
                 .strength(d => {
+                    if (performanceMode) {
+                        // Simplified charge for performance
+                        return chargeStrength;
+                    }
                     // Stronger repulsion for larger nodes
-                    return -200 - (d.size * 5);
+                    return chargeStrength - (d.size * 5);
                 })
-                .distanceMax(300)
+                .distanceMax(performanceMode ? 200 : 300)
             )
             .force('center', d3.forceCenter(width / 2, height / 2))
             .force('collision', d3.forceCollide()
-                .radius(d => d.size + 8)
-                .strength(0.8)
+                .radius(d => d.size + (performanceMode ? 4 : 8))
+                .strength(performanceMode ? 0.5 : 0.8)
             )
             .force('x', d3.forceX(width / 2).strength(0.05))
-            .force('y', d3.forceY(height / 2).strength(0.05))
-            .alphaDecay(0.02)
-            .velocityDecay(0.3);
+            .force('y', d3.forceY(width / 2).strength(0.05))
+            .alphaDecay(alphaDecay)
+            .velocityDecay(velocityDecay);
         
-        // Update positions on each tick with curved paths
+        // Update positions on each tick with performance optimization
+        let tickCount = 0;
         currentSimulation.on('tick', () => {
-            const pathGenerator = d => {
-                const dx = d.target.x - d.source.x;
-                const dy = d.target.y - d.source.y;
-                const dr = Math.sqrt(dx * dx + dy * dy) * 0.3; // Curve factor
-                
-                // Calculate curve direction to avoid overlaps
-                const sourceIndex = nodes.findIndex(n => n.id === d.source.id);
-                const targetIndex = nodes.findIndex(n => n.id === d.target.id);
-                const sweep = sourceIndex < targetIndex ? 0 : 1;
-                
-                return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,${sweep} ${d.target.x},${d.target.y}`;
-            };
+            tickCount++;
             
-            // Update visible links
-            link.attr('d', pathGenerator);
-            
-            // Update invisible click areas with same path
-            linkClickArea.attr('d', pathGenerator);
+            if (performanceMode) {
+                // Use straight lines for better performance in large graphs
+                link.attr('d', d => `M${d.source.x},${d.source.y}L${d.target.x},${d.target.y}`);
+                linkClickArea.attr('d', d => `M${d.source.x},${d.source.y}L${d.target.x},${d.target.y}`);
+            } else {
+                // Use curved paths for better visual appeal in smaller graphs
+                const pathGenerator = d => {
+                    const dx = d.target.x - d.source.x;
+                    const dy = d.target.y - d.source.y;
+                    const dr = Math.sqrt(dx * dx + dy * dy) * 0.3; // Curve factor
+                    
+                    // Calculate curve direction to avoid overlaps
+                    const sourceIndex = nodes.findIndex(n => n.id === d.source.id);
+                    const targetIndex = nodes.findIndex(n => n.id === d.target.id);
+                    const sweep = sourceIndex < targetIndex ? 0 : 1;
+                    
+                    return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,${sweep} ${d.target.x},${d.target.y}`;
+                };
+                
+                // Update visible links
+                link.attr('d', pathGenerator);
+                
+                // Update invisible click areas with same path
+                linkClickArea.attr('d', pathGenerator);
+            }
             
             node.attr('transform', d => `translate(${d.x},${d.y})`);
         });
         
         // Handle label collisions after simulation stabilizes
         currentSimulation.on('end', () => {
+            const endTime = performance.now();
+            const renderTime = endTime - startTime;
+            console.log(`Graph rendering completed in ${renderTime.toFixed(2)}ms with ${tickCount} ticks`);
+            
             setTimeout(() => {
-                handleLabelCollisions();
+                if (!performanceMode) {
+                    handleLabelCollisions();
+                } else {
+                    console.log('Skipping label collision detection for performance');
+                }
             }, 100);
         });
         
@@ -1277,12 +1336,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function selectEdge(edgeData) {
+        // Lazy loading: compute expensive details only when edge is selected
+        const startTime = performance.now();
+        
         // Update info panel with edge details
         const fileInfo = document.getElementById('file-info');
         const sourceName = edgeData.source.name || edgeData.source.id.split('/').pop();
         const targetName = edgeData.target.name || edgeData.target.id.split('/').pop();
         
-        fileInfo.innerHTML = `
+        // Show basic info immediately, load symbols lazily if needed
+        const basicInfo = `
             <div class="edge-details">
                 <h4>Dependency Connection</h4>
                 <p><strong>From:</strong> ${sourceName}</p>
@@ -1290,12 +1353,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 <p><strong>To:</strong> ${targetName}</p>
                 <p class="path-detail">${edgeData.target.path}</p>
                 <p><strong>Import Count:</strong> ${edgeData.count || 1}</p>
-                ${edgeData.symbols && edgeData.symbols.length > 0 ? `
-                    <p><strong>Imported Symbols:</strong></p>
-                    <ul class="symbols-list">
-                        ${edgeData.symbols.map(symbol => `<li>${symbol}</li>`).join('')}
-                    </ul>
-                ` : '<p><em>No symbol information available</em></p>'}
+                <div id="symbols-container">
+                    ${performanceMode ? 
+                        '<p><em>Symbol details disabled in performance mode</em></p>' :
+                        edgeData.symbols && edgeData.symbols.length > 0 ? `
+                            <p><strong>Imported Symbols:</strong></p>
+                            <ul class="symbols-list">
+                                ${edgeData.symbols.slice(0, 20).map(symbol => `<li>${symbol}</li>`).join('')}
+                                ${edgeData.symbols.length > 20 ? `<li><em>... and ${edgeData.symbols.length - 20} more</em></li>` : ''}
+                            </ul>
+                        ` : '<p><em>No symbol information available</em></p>'
+                    }
+                </div>
             </div>
             
             <div class="edge-actions">
@@ -1307,6 +1376,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 </button>
             </div>
         `;
+        
+        fileInfo.innerHTML = basicInfo;
+        
+        const endTime = performance.now();
+        if (performanceMode) {
+            console.log(`Edge selection rendered in ${(endTime - startTime).toFixed(2)}ms`);
+        }
         
         // Highlight the selected edge
         g.selectAll('.link')
@@ -1998,6 +2074,29 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('search-input').value = '';
         
         applyFilters();
+    }
+    
+    // Performance indicator
+    function showPerformanceIndicator(message) {
+        // Remove any existing indicator
+        const existing = document.querySelector('.performance-indicator');
+        if (existing) existing.remove();
+        
+        // Create new indicator
+        const indicator = document.createElement('div');
+        indicator.className = 'performance-indicator';
+        indicator.innerHTML = `
+            <span class="perf-icon">⚡</span>
+            <span class="perf-text">${message}</span>
+        `;
+        document.body.appendChild(indicator);
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            if (indicator.parentNode) {
+                indicator.remove();
+            }
+        }, 5000);
     }
     
     // Utility function for debouncing search input

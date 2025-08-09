@@ -144,6 +144,54 @@ main {
     background: #c0392b;
 }
 
+/* Performance indicator */
+.performance-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #34495e;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 1000;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideIn 0.3s ease-out;
+}
+
+.perf-icon {
+    font-size: 16px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.perf-text {
+    font-family: 'Segoe UI', sans-serif;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
 /* Upload Zone Styles */
 .upload-zone {
     padding: 3rem;

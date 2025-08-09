@@ -1,0 +1,3 @@
+## Feature request/bug reports/tweaks to make:
+* The arrows and markers are not looking cohesive. The arrow looks disconnected from the line. It should be a line with arrow at the end.
+* Most imported and most exported panels are janky. They are showing a scroll wheel inside it and only a couple lines instead of using all the veritcal room they have. Also I want the rows of imports to be shown as a striped table for easy visuals.
