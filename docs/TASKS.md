@@ -43,11 +43,11 @@
 - [x] 3.6 Resolve relative imports to absolute module paths
 
 ### 4. Graph Generation CLI Tool - Module Aggregation
-- [ ] 4.1 Implement module detection by directory boundaries (each directory = module)
-- [ ] 4.2 Aggregate files into module-level nodes instead of file-level
-- [ ] 4.3 Sum lines of code for all files in a module
-- [ ] 4.4 Count number of files per module
-- [ ] 4.5 Add node type classification (app/lib/external) based on path
+- [x] 4.1 Implement module detection by directory boundaries (each directory = module)
+- [x] 4.2 Aggregate files into module-level nodes instead of file-level
+- [x] 4.3 Sum lines of code for all files in a module
+- [x] 4.4 Count number of files per module
+- [x] 4.5 Add node type classification (app/lib/external) based on path
 
 ### 5. Graph Generation CLI Tool - Graph Structure
 - [ ] 5.1 Transform current graph structure to spec format with nodes and edges arrays

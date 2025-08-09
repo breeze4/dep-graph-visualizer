@@ -46,6 +46,143 @@ console.log(`App directory:  ${appPath}`);
 console.log(`Libs directory: ${libsPath}`);
 console.log('');
 
+// Detect modules by directory boundaries
+function detectModules(files, appDir, libsDir) {
+    const modules = new Map();
+    
+    for (const file of files) {
+        if (file.isTest) continue; // Skip test files
+        
+        const filePath = file.absolutePath;
+        let moduleId = null;
+        let moduleType = null;
+        
+        // Determine if file is in app or libs directory
+        if (filePath.startsWith(appDir)) {
+            moduleType = 'app';
+            const relativePath = path.relative(appDir, filePath);
+            const pathParts = relativePath.split(path.sep);
+            
+            // If file is directly in apps root (like main.ts), treat as root app module
+            if (pathParts.length === 1) {
+                moduleId = `apps/${path.basename(pathParts[0], path.extname(pathParts[0]))}`;
+            } else {
+                // Use first directory as module (like dashboard, user-profile)
+                moduleId = `apps/${pathParts[0]}`;
+            }
+        } else if (filePath.startsWith(libsDir)) {
+            moduleType = 'lib';
+            const relativePath = path.relative(libsDir, filePath);
+            const pathParts = relativePath.split(path.sep);
+            
+            // For libs, if file is directly in libs root, use filename as module
+            if (pathParts.length === 1) {
+                moduleId = `libs/${path.basename(pathParts[0], path.extname(pathParts[0]))}`;
+            } else {
+                // Use first directory as module
+                moduleId = `libs/${pathParts[0]}`;
+            }
+        }
+        
+        if (moduleId) {
+            if (!modules.has(moduleId)) {
+                modules.set(moduleId, {
+                    id: moduleId,
+                    type: moduleType,
+                    files: [],
+                    linesOfCode: 0,
+                    fileCount: 0
+                });
+            }
+            
+            const module = modules.get(moduleId);
+            module.files.push(file);
+            module.linesOfCode += countLines(file.absolutePath);
+            module.fileCount++;
+        }
+    }
+    
+    return modules;
+}
+
+// Build module-level dependency graph
+function buildModuleDependencyGraph(project, modules, files, projectRoot, appDir, libsDir) {
+    console.log('Building module-level dependencies...');
+    
+    // First, create a mapping from file paths to module IDs
+    const fileToModuleMap = new Map();
+    
+    for (const [moduleId, module] of modules) {
+        for (const file of module.files) {
+            const relativePath = path.relative(projectRoot, file.absolutePath);
+            fileToModuleMap.set(relativePath, moduleId);
+        }
+    }
+    
+    // Track dependencies between modules
+    const moduleDependencies = new Map();
+    
+    // Initialize module dependency tracking
+    for (const [moduleId] of modules) {
+        moduleDependencies.set(moduleId, {
+            imports: new Set(),
+            importedBy: new Set(),
+            importDetails: new Map() // moduleId -> { symbols: [], count: number }
+        });
+    }
+    
+    // Process each file's imports to build module dependencies
+    let processedFiles = 0;
+    const totalFiles = files.filter(f => !f.isTest).length;
+    
+    for (const file of files) {
+        if (file.isTest) continue;
+        
+        processedFiles++;
+        if (processedFiles % 5 === 0 || processedFiles === totalFiles) {
+            const percentage = Math.round((processedFiles / totalFiles) * 100);
+            console.log(`  Processing module dependencies: ${processedFiles}/${totalFiles} (${percentage}%)...`);
+        }
+        
+        const fileRelativePath = path.relative(projectRoot, file.absolutePath);
+        const sourceModuleId = fileToModuleMap.get(fileRelativePath);
+        
+        if (!sourceModuleId) continue;
+        
+        // Parse imports for this file
+        const imports = parseImportsWithTsMorph(project, file.absolutePath, projectRoot);
+        
+        for (const importInfo of imports) {
+            const targetModuleId = fileToModuleMap.get(importInfo.path);
+            
+            if (targetModuleId && targetModuleId !== sourceModuleId) {
+                // Add module-level dependency
+                moduleDependencies.get(sourceModuleId).imports.add(targetModuleId);
+                moduleDependencies.get(targetModuleId).importedBy.add(sourceModuleId);
+                
+                // Track detailed import information at module level
+                const sourceModuleDeps = moduleDependencies.get(sourceModuleId);
+                if (!sourceModuleDeps.importDetails.has(targetModuleId)) {
+                    sourceModuleDeps.importDetails.set(targetModuleId, {
+                        symbols: new Set(),
+                        count: 0
+                    });
+                }
+                
+                const importDetail = sourceModuleDeps.importDetails.get(targetModuleId);
+                importDetail.count++;
+                
+                // Add symbols
+                for (const symbol of importInfo.symbols) {
+                    importDetail.symbols.add(symbol.name);
+                }
+            }
+        }
+    }
+    
+    return moduleDependencies;
+}
+
 // Initialize ts-morph project
 function initializeTsMorphProject(appDir, libsDir) {
     console.log('Initializing TypeScript project...');
@@ -406,9 +543,17 @@ function analyzeDirectories(appDir, libsDir) {
     const allFiles = [...appFiles, ...libFiles];
     console.log(`\nTotal files to analyze: ${allFiles.length}`);
     
-    // Build dependency graph
-    console.log('\nBuilding dependency graph...');
-    const graph = buildDependencyGraph(project, allFiles, commonBase);
+    // Detect modules by directory boundaries
+    console.log('\nDetecting modules...');
+    const modules = detectModules(allFiles, appDir, libsDir);
+    console.log(`  Found ${modules.size} modules:`);
+    for (const [moduleId, module] of modules) {
+        console.log(`    ${moduleId} (${module.type}): ${module.fileCount} files, ${module.linesOfCode} LOC`);
+    }
+    
+    // Build module-level dependency graph
+    console.log('\nBuilding module-level dependency graph...');
+    const moduleDependencies = buildModuleDependencyGraph(project, modules, allFiles, commonBase, appDir, libsDir);
     
     // Count lines of code
     console.log('\nCounting lines of code...');
@@ -429,6 +574,31 @@ function analyzeDirectories(appDir, libsDir) {
     
     // Generate output - write to frontend directory
     const outputPath = path.join(__dirname, '..', 'frontend', 'dependency-graph.json');
+    
+    // Convert modules to the interim format (still keeping old structure for now)
+    const moduleGraph = {};
+    
+    for (const [moduleId, module] of modules) {
+        const deps = moduleDependencies.get(moduleId);
+        moduleGraph[moduleId] = {
+            id: moduleId,
+            type: module.type,
+            linesOfCode: module.linesOfCode,
+            fileCount: module.fileCount,
+            imports: Array.from(deps.imports),
+            importedBy: Array.from(deps.importedBy),
+            importDetails: Array.from(deps.importDetails.entries()).map(([targetId, detail]) => ({
+                module: targetId,
+                symbols: Array.from(detail.symbols),
+                count: detail.count
+            }))
+        };
+    }
+    
+    // Count apps and libs
+    const appModules = Array.from(modules.values()).filter(m => m.type === 'app').length;
+    const libModules = Array.from(modules.values()).filter(m => m.type === 'lib').length;
+    
     const output = {
         metadata: {
             generatedAt: new Date().toISOString(),
@@ -440,10 +610,13 @@ function analyzeDirectories(appDir, libsDir) {
                 codeFiles: allFiles.filter(f => !f.isTest).length,
                 testFiles: allFiles.filter(f => f.isTest).length,
                 totalCodeLines,
-                totalTestLines
+                totalTestLines,
+                apps: appModules,
+                libs: libModules,
+                totalModules: modules.size
             }
         },
-        graph: graph
+        modules: moduleGraph
     };
     
     fs.writeFileSync(outputPath, JSON.stringify(output, null, 2));

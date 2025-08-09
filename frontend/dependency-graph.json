@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generatedAt": "2025-08-09T17:02:42.482Z",
+    "generatedAt": "2025-08-09T17:04:54.690Z",
     "projectRoot": "/mnt/d/dev/_ws/dep-graph-visualizer/example/example-app/src",
     "appDirectory": "/mnt/d/dev/_ws/dep-graph-visualizer/example/example-app/src/apps",
     "libsDirectory": "/mnt/d/dev/_ws/dep-graph-visualizer/example/example-app/src/libs",
@@ -9,261 +9,219 @@
       "codeFiles": 8,
       "testFiles": 3,
       "totalCodeLines": 219,
-      "totalTestLines": 65
+      "totalTestLines": 65,
+      "apps": 3,
+      "libs": 5,
+      "totalModules": 8
     }
   },
-  "graph": {
-    "apps/dashboard/index.ts": {
+  "modules": {
+    "apps/dashboard": {
+      "id": "apps/dashboard",
+      "type": "app",
+      "linesOfCode": 43,
+      "fileCount": 1,
       "imports": [
-        "libs/api.ts",
-        "libs/utils.ts",
-        "libs/logger.ts"
+        "libs/api",
+        "libs/utils",
+        "libs/logger"
       ],
       "importedBy": [
-        "apps/main.ts"
+        "apps/main"
       ],
-      "linesOfCode": 43,
-      "isTest": false,
       "importDetails": [
         {
-          "path": "libs/api.ts",
+          "module": "libs/api",
           "symbols": [
-            {
-              "name": "api",
-              "isTypeOnly": false
-            }
+            "api"
           ],
-          "isTypeOnly": false
+          "count": 1
         },
         {
-          "path": "libs/utils.ts",
+          "module": "libs/utils",
           "symbols": [
-            {
-              "name": "formatNumber",
-              "isTypeOnly": false
-            }
+            "formatNumber"
           ],
-          "isTypeOnly": false
+          "count": 1
         },
         {
-          "path": "libs/logger.ts",
+          "module": "libs/logger",
           "symbols": [
-            {
-              "name": "Logger",
-              "isTypeOnly": false
-            }
+            "Logger"
           ],
-          "isTypeOnly": false
+          "count": 1
         }
       ]
     },
-    "apps/main.ts": {
+    "apps/main": {
+      "id": "apps/main",
+      "type": "app",
+      "linesOfCode": 27,
+      "fileCount": 1,
       "imports": [
-        "apps/style.css",
-        "typescript.svg",
-        "libs/counter.ts",
-        "apps/dashboard/index.ts",
-        "apps/user-profile/profile.ts"
+        "libs/counter",
+        "apps/dashboard",
+        "apps/user-profile"
       ],
       "importedBy": [],
-      "linesOfCode": 27,
-      "isTest": false,
       "importDetails": [
         {
-          "path": "apps/style.css",
-          "symbols": [],
-          "isTypeOnly": false
+          "module": "libs/counter",
+          "symbols": [
+            "setupCounter"
+          ],
+          "count": 1
         },
         {
-          "path": "typescript.svg",
+          "module": "apps/dashboard",
           "symbols": [
-            {
-              "name": "default",
-              "alias": "typescriptLogo",
-              "isTypeOnly": false
-            }
+            "default"
           ],
-          "isTypeOnly": false
+          "count": 1
         },
         {
-          "path": "libs/counter.ts",
+          "module": "apps/user-profile",
           "symbols": [
-            {
-              "name": "setupCounter",
-              "isTypeOnly": false
-            }
+            "createProfile"
           ],
-          "isTypeOnly": false
-        },
-        {
-          "path": "apps/dashboard/index.ts",
-          "symbols": [
-            {
-              "name": "default",
-              "alias": "dashboard",
-              "isTypeOnly": false
-            }
-          ],
-          "isTypeOnly": false
-        },
-        {
-          "path": "apps/user-profile/profile.ts",
-          "symbols": [
-            {
-              "name": "createProfile",
-              "isTypeOnly": false
-            }
-          ],
-          "isTypeOnly": false
+          "count": 1
         }
       ]
     },
-    "apps/user-profile/profile.ts": {
-      "imports": [
-        "libs/api.ts",
-        "libs/validators.ts",
-        "libs/logger.ts"
-      ],
-      "importedBy": [
-        "apps/main.ts"
-      ],
+    "apps/user-profile": {
+      "id": "apps/user-profile",
+      "type": "app",
       "linesOfCode": 54,
-      "isTest": false,
+      "fileCount": 1,
+      "imports": [
+        "libs/api",
+        "libs/validators",
+        "libs/logger"
+      ],
+      "importedBy": [
+        "apps/main"
+      ],
       "importDetails": [
         {
-          "path": "libs/api.ts",
+          "module": "libs/api",
           "symbols": [
-            {
-              "name": "api",
-              "isTypeOnly": false
-            }
+            "api"
           ],
-          "isTypeOnly": false
+          "count": 1
         },
         {
-          "path": "libs/validators.ts",
+          "module": "libs/validators",
           "symbols": [
-            {
-              "name": "isEmail",
-              "isTypeOnly": false
-            },
-            {
-              "name": "sanitizeInput",
-              "isTypeOnly": false
-            }
+            "isEmail",
+            "sanitizeInput"
           ],
-          "isTypeOnly": false
+          "count": 1
         },
         {
-          "path": "libs/logger.ts",
+          "module": "libs/logger",
           "symbols": [
-            {
-              "name": "Logger",
-              "isTypeOnly": false
-            }
+            "Logger"
           ],
-          "isTypeOnly": false
+          "count": 1
         }
       ]
     },
-    "libs/api.ts": {
-      "imports": [
-        "libs/logger.ts"
-      ],
-      "importedBy": [
-        "apps/dashboard/index.ts",
-        "apps/user-profile/profile.ts"
-      ],
+    "libs/api": {
+      "id": "libs/api",
+      "type": "lib",
       "linesOfCode": 28,
-      "isTest": false,
+      "fileCount": 1,
+      "imports": [
+        "libs/logger"
+      ],
+      "importedBy": [
+        "apps/dashboard",
+        "apps/user-profile"
+      ],
       "importDetails": [
         {
-          "path": "libs/logger.ts",
+          "module": "libs/logger",
           "symbols": [
-            {
-              "name": "defaultLogger",
-              "isTypeOnly": false
-            }
+            "defaultLogger"
           ],
-          "isTypeOnly": false
+          "count": 1
         }
       ]
     },
-    "libs/counter.ts": {
+    "libs/counter": {
+      "id": "libs/counter",
+      "type": "lib",
+      "linesOfCode": 14,
+      "fileCount": 1,
       "imports": [
-        "libs/utils.ts",
-        "libs/logger.ts"
+        "libs/utils",
+        "libs/logger"
       ],
       "importedBy": [
-        "apps/main.ts"
+        "apps/main"
       ],
-      "linesOfCode": 14,
-      "isTest": false,
       "importDetails": [
         {
-          "path": "libs/utils.ts",
+          "module": "libs/utils",
           "symbols": [
-            {
-              "name": "formatNumber",
-              "isTypeOnly": false
-            }
+            "formatNumber"
           ],
-          "isTypeOnly": false
+          "count": 1
         },
         {
-          "path": "libs/logger.ts",
+          "module": "libs/logger",
           "symbols": [
-            {
-              "name": "defaultLogger",
-              "isTypeOnly": false
-            }
+            "defaultLogger"
           ],
-          "isTypeOnly": false
+          "count": 1
         }
       ]
     },
-    "libs/logger.ts": {
-      "imports": [],
-      "importedBy": [
-        "apps/dashboard/index.ts",
-        "apps/user-profile/profile.ts",
-        "libs/api.ts",
-        "libs/counter.ts"
-      ],
+    "libs/logger": {
+      "id": "libs/logger",
+      "type": "lib",
       "linesOfCode": 23,
-      "isTest": false,
-      "importDetails": []
-    },
-    "libs/utils.ts": {
+      "fileCount": 1,
       "imports": [],
       "importedBy": [
-        "apps/dashboard/index.ts",
-        "libs/counter.ts",
-        "libs/validators.ts"
+        "apps/dashboard",
+        "apps/user-profile",
+        "libs/api",
+        "libs/counter"
       ],
-      "linesOfCode": 13,
-      "isTest": false,
       "importDetails": []
     },
-    "libs/validators.ts": {
+    "libs/utils": {
+      "id": "libs/utils",
+      "type": "lib",
+      "linesOfCode": 13,
+      "fileCount": 1,
+      "imports": [],
+      "importedBy": [
+        "apps/dashboard",
+        "libs/counter",
+        "libs/validators"
+      ],
+      "importDetails": []
+    },
+    "libs/validators": {
+      "id": "libs/validators",
+      "type": "lib",
+      "linesOfCode": 17,
+      "fileCount": 1,
       "imports": [
-        "libs/utils.ts"
+        "libs/utils"
       ],
       "importedBy": [
-        "apps/user-profile/profile.ts"
+        "apps/user-profile"
       ],
-      "linesOfCode": 17,
-      "isTest": false,
       "importDetails": [
         {
-          "path": "libs/utils.ts",
+          "module": "libs/utils",
           "symbols": [
-            {
-              "name": "clamp",
-              "isTypeOnly": false
-            }
+            "clamp"
           ],
-          "isTypeOnly": false
+          "count": 1
         }
       ]
     }
