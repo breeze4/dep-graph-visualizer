@@ -275,9 +275,35 @@ edgeSelection
 
 ---
 
-## **8. Future Extensions**
+## **8. UI Issues & Improvements**
+
+### **8.1 Arrow and Edge Rendering**
+* Arrows should appear as cohesive lines with proper arrowheads
+* Arrow markers should be visually connected to the edge line
+* No visual disconnect between line and arrow tip
+
+### **8.2 Import/Export Panels**
+* Panels should utilize full vertical space available
+* Remove unnecessary scroll wheels for small content
+* Display import/export rows as striped tables for better readability
+* Proper responsive sizing based on panel height
+
+### **8.3 Graph Rendering Performance**
+* Render time logging should reset properly between renders
+* Tick count should not accumulate over time
+* Clear performance metrics on each new render cycle
+
+### **8.4 Multi-Select Mode UX**
+* Remove purple modal flashing when shift key is held
+* Add clear visual indicators for selected nodes
+* Distinguish between target node (first selection) and comparison nodes
+* Provide clear feedback about selection state and purpose
+
+---
+
+## **9. Future Extensions**
 
 * 3rd party dependency map.
-* “What if I change this module?” breakage prediction.
+* "What if I change this module?" breakage prediction.
 * Save/load selection states.
 * Auto-generate LLM prompts for interface design.
