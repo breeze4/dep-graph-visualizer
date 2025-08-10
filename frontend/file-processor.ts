@@ -3,6 +3,13 @@
  * Handles file upload, validation, caching, and progress tracking
  */
 
+// Declare the global window property for visualization initialization
+declare global {
+    interface Window {
+        initializeVisualizationWhenReady?: () => void;
+    }
+}
+
 import { 
     loadingMessage, 
     errorMessage, 
@@ -135,7 +142,7 @@ function processFile(file, validateAndLoadGraph) {
         // Add small delay to show parsing step
         setTimeout(() => {
             try {
-                const jsonData = JSON.parse(e.target.result);
+                const jsonData = JSON.parse(e.target.result as string);
                 updateProgress(60, 'Validating data...');
                 
                 // Add delay to show validation step

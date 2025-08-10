@@ -6,7 +6,7 @@ import * as d3 from 'd3';
 
 import { getG } from './graph-renderer.ts';
 import { clearSearchHighlight } from './interaction-handlers.ts';
-import { exitFocusMode, exitConnectionFocus, clearAllHighlights } from './focus-modes.ts';
+import { exitFocusMode, exitConnectionFocus, clearAllHighlights, getFocusMode, getConnectionFocusMode } from './focus-modes.ts';
 import { debounce } from './dom-setup.ts';
 
 /**
@@ -16,10 +16,10 @@ function applyFilters(currentGraphData, updateGraphStatistics) {
     if (!currentGraphData || !getG()) return;
     
     const g = getG();
-    const showApps = document.getElementById('show-apps').checked;
-    const showLibs = document.getElementById('show-libs').checked;
-    const minLoc = parseInt(document.getElementById('min-loc').value);
-    const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+    const showApps = (document.getElementById('show-apps') as HTMLInputElement).checked;
+    const showLibs = (document.getElementById('show-libs') as HTMLInputElement).checked;
+    const minLoc = parseInt((document.getElementById('min-loc') as HTMLInputElement).value);
+    const searchTerm = (document.getElementById('search-input') as HTMLInputElement).value.toLowerCase().trim();
     
     let filteredNodes = [];
     
@@ -150,7 +150,7 @@ function highlightSearchResultsInFiltered(searchTerm, visibleNodes) {
  * Toggle node labels visibility
  */
 function toggleNodeLabels() {
-    const showLabels = document.getElementById('toggle-labels').checked;
+    const showLabels = (document.getElementById('toggle-labels') as HTMLInputElement).checked;
     const g = getG();
     if (g) {
         g.selectAll('.node-label')
@@ -165,8 +165,8 @@ function toggleNodeLabels() {
  * Update minimum lines of code filter
  */
 function updateMinLoc(applyFilters) {
-    const minLoc = parseInt(document.getElementById('min-loc').value);
-    document.getElementById('loc-value').textContent = minLoc;
+    const minLoc = parseInt((document.getElementById('min-loc') as HTMLInputElement).value);
+    document.getElementById('loc-value').textContent = minLoc.toString();
     applyFilters();
 }
 
@@ -174,11 +174,11 @@ function updateMinLoc(applyFilters) {
  * Reset all filters to default values
  */
 function resetFilters(applyFilters) {
-    document.getElementById('show-apps').checked = true;
-    document.getElementById('show-libs').checked = true;
-    document.getElementById('min-loc').value = 0;
+    (document.getElementById('show-apps') as HTMLInputElement).checked = true;
+    (document.getElementById('show-libs') as HTMLInputElement).checked = true;
+    (document.getElementById('min-loc') as HTMLInputElement).value = '0';
     document.getElementById('loc-value').textContent = '0';
-    document.getElementById('search-input').value = '';
+    (document.getElementById('search-input') as HTMLInputElement).value = '';
     
     // Clear any focus modes
     if (getFocusMode && getFocusMode()) exitFocusMode();
@@ -202,10 +202,10 @@ function applyFiltersLegacy(currentGraphData, updateGraphStatistics) {
     if (!currentGraphData || !getG()) return;
     
     const g = getG();
-    const showApps = document.getElementById('show-apps').checked;
-    const showLibs = document.getElementById('show-libs').checked;
-    const minLoc = parseInt(document.getElementById('min-loc').value);
-    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    const showApps = (document.getElementById('show-apps') as HTMLInputElement).checked;
+    const showLibs = (document.getElementById('show-libs') as HTMLInputElement).checked;
+    const minLoc = parseInt((document.getElementById('min-loc') as HTMLInputElement).value);
+    const searchTerm = (document.getElementById('search-input') as HTMLInputElement).value.toLowerCase();
     
     const graph = currentGraphData.graph;
     const filteredNodes = [];

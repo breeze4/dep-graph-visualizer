@@ -7,6 +7,15 @@ import * as d3 from 'd3';
 import { getG, getNodes } from './graph-renderer.ts';
 import { selectNode } from './interaction-handlers.ts';
 
+// Custom interface for elements with updateCount method
+interface ElementWithUpdateCount extends Element {
+    updateCount?: () => void;
+}
+
+interface HTMLElementWithUpdateCount extends HTMLElement {
+    updateCount?: () => void;
+}
+
 // Focus mode state
 let focusMode = false;
 let focusedNode = null;
@@ -160,7 +169,7 @@ function updateMultiSelectionVisual() {
         });
     
     // Update the count in the indicator if it exists
-    const indicator = document.querySelector('.multi-select-indicator');
+    const indicator = document.querySelector('.multi-select-indicator') as ElementWithUpdateCount;
     if (indicator && indicator.updateCount) {
         indicator.updateCount();
     }
@@ -355,7 +364,7 @@ function updateMultiSelectIndicator(isActive) {
         };
         
         // Store update function for later use
-        indicator.updateCount = updateCount;
+        (indicator as HTMLElementWithUpdateCount).updateCount = updateCount;
     }
 }
 
@@ -523,8 +532,8 @@ function updateAllEdgeButtons() {
     const focusBtns = document.querySelectorAll('#focus-btn[data-source][data-target]');
     
     highlightBtns.forEach(btn => {
-        const sourceId = btn.dataset.source;
-        const targetId = btn.dataset.target;
+        const sourceId = (btn as HTMLElement).dataset.source;
+        const targetId = (btn as HTMLElement).dataset.target;
         if (sourceId && targetId) {
             const isHighlighted = isPathHighlighted(sourceId, targetId);
             btn.textContent = isHighlighted ? 'Clear Highlight' : 'Highlight Path';
@@ -533,8 +542,8 @@ function updateAllEdgeButtons() {
     });
     
     focusBtns.forEach(btn => {
-        const sourceId = btn.dataset.source;
-        const targetId = btn.dataset.target;
+        const sourceId = (btn as HTMLElement).dataset.source;
+        const targetId = (btn as HTMLElement).dataset.target;
         if (sourceId && targetId) {
             const connectionKey = `${sourceId}-${targetId}`;
             const isFocused = connectionFocusMode && focusedConnection === connectionKey;
