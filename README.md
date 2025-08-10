@@ -8,13 +8,7 @@ Analyzes internal dependencies in JS/TS repositories, separating apps and libs, 
 
 ## Architecture
 
-The project consists of three main components:
-
-### Backend (`/backend`)
-- **Node.js + Express** API server
-- Serves static files and provides API endpoints
-- File analysis and dependency extraction
-- Graph data processing and transformation
+The project consists of two main components:
 
 ### Frontend (`/frontend`) 
 - **Vite + TypeScript + D3.js** visualization
@@ -28,14 +22,6 @@ The project consists of three main components:
 - Outputs structured JSON data
 
 ## Quick Start
-
-### Backend Setup
-```bash
-cd backend
-npm install
-npm start
-# Server runs on http://localhost:3000
-```
 
 ### Frontend Development  
 ```bash
@@ -72,19 +58,10 @@ npm run lint
 npm run format
 ```
 
-### Backend Commands
-```bash
-# Start server
-npm start
-
-# Development mode (if nodemon installed)
-npm run dev
-```
 
 ## Project Structure
 
 ```
-├── backend/           # Express server and API endpoints
 ├── frontend/          # Vite + TypeScript + D3.js app
 ├── cli-tool/          # Command-line dependency analyzer
 ├── example/           # Test project for graph analysis
