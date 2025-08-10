@@ -15,6 +15,9 @@ yarn-error.log*
 logs
 *.log
 
+.aicodeprep-gui
+fullcode.txt
+
 # Runtime data
 pids
 *.pid

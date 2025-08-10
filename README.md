@@ -29,7 +29,7 @@ node graph-main.js "./example/example-app/src"
 ## Architecture
 
 - **Backend**: Node.js + Express API server
-- **Frontend**: Vanilla JS + D3.js visualization
+- **Frontend**: Vite + Typescript + D3.js visualization
 - **No build system** - runs directly
 
 ## Features
