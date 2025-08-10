@@ -4,12 +4,20 @@
  */
 import * as d3 from 'd3';
 
-import { transformGraphData, calculateEdgeWeight } from './graph-transformer.ts';
+import { transformGraphData, calculateEdgeWeight, GraphNode } from './graph-transformer.ts';
 import { getDimensions } from './dom-setup.ts';
+import { SimulationNodeDatum, SimulationLinkDatum } from 'd3';
+
+// Extended interfaces for D3 simulation with our custom properties
+interface SimulationNode extends SimulationNodeDatum, GraphNode {}
 
 // D3 visualization variables
-let svg, g, zoom, currentSimulation;
-let nodes, links;
+let svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>;
+let g: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+let zoom: d3.ZoomBehavior<SVGSVGElement, unknown>;
+let currentSimulation: d3.Simulation<SimulationNode, undefined>;
+let nodes: SimulationNode[];
+let links: any[];
 let performanceMode = false; // Enable optimizations for large graphs
 let nodeVirtualization = false; // Enable node virtualization
 

@@ -289,7 +289,7 @@ function highlightNode(filePath) {
     const nodes = getNodes();
     const nodeData = nodes.find(d => d.id === filePath);
     if (nodeData) {
-        selectNode(nodeData);
+        selectNode(nodeData, false, null);
     }
 }
 

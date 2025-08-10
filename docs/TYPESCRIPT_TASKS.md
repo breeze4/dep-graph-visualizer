@@ -35,8 +35,8 @@ Tasks to fix TypeScript compilation errors identified by `npm run typecheck`. Th
 ### **interaction-handlers.ts**
 - [ ] Fix d3.drag call - provide all required arguments or use correct overload (line 292)
 
-### **script.ts**
-- [ ] Add type declarations for window properties (lines 223, 226-231):
+### **script.ts** ✅
+- [x] Add type declarations for window properties (lines 223, 226-231):
   - `window.initializeVisualizationWhenReady`
   - `window.toggleFocusMode`
   - `window.toggleHighlightPath`
@@ -45,15 +45,24 @@ Tasks to fix TypeScript compilation errors identified by `npm run typecheck`. Th
   - `window.copyInterfaceToClipboard`
   - `window.clearMultiSelection`
 
-### **stats-ui.ts**
-- [ ] Define proper type for node objects with `imports` property (line 55)
-- [ ] Fix type assignments - convert numbers to strings for innerText (lines 63-66)
-- [ ] Cast HTMLElement to HTMLInputElement for `.value` property (line 264)
-- [ ] Add type for custom `updateCount` property on HTMLDivElement (line 435)
-- [ ] Import `showMainInterface` function from file-processor (line 449)
+### **stats-ui.ts** ✅
+- [x] Define proper type for node objects with `imports` property (line 55)
+- [x] Fix type assignments - convert numbers to strings for innerText (lines 63-66)
+- [x] Cast HTMLElement to HTMLInputElement for `.value` property (line 264)
+- [x] Add type for custom `updateCount` property on HTMLDivElement (line 435)
+- [x] Import `showMainInterface` function from file-processor (line 449)
 
-### **tooltips.ts**
-- [ ] Fix BaseType issue - ensure proper type for D3 selection context (line 93)
+### **tooltips.ts** ✅
+- [x] Fix BaseType issue - ensure proper type for D3 selection context (line 93)
+
+### **graph-renderer.ts** ✅ 
+- [x] Fix d3.forceSimulation call - provide all required arguments or use correct overload (line 62)
+- [x] Add proper type for simulation nodes with custom properties (lines 344, 351, 352, 364, 370, 472)
+  - Add `id` property to SimulationNodeDatum
+  - Add `size` property to node data type
+
+### **interaction-handlers.ts** ✅
+- [x] Fix d3.drag call - provide all required arguments or use correct overload (line 292)
 
 ## Implementation Notes
 

@@ -88,7 +88,7 @@ function hideLinkTooltip() {
 function updateTooltipPosition(event) {
     const tooltip = d3.selectAll('.node-tooltip, .link-tooltip');
     if (!tooltip.empty()) {
-        const tooltipNode = tooltip.node();
+        const tooltipNode = tooltip.node() as HTMLElement;
         if (tooltipNode) {
             const tooltipRect = tooltipNode.getBoundingClientRect();
             const windowWidth = window.innerWidth;

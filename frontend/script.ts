@@ -2,6 +2,19 @@
  * Main Application Coordination Script
  * Imports and coordinates all feature modules
  */
+
+// Declare global window properties
+declare global {
+    interface Window {
+        initializeVisualizationWhenReady?: () => void;
+        toggleFocusMode?: (nodeId: any) => void;
+        toggleHighlightPath?: (sourceId: any, targetId: any) => void;
+        toggleConnectionFocus?: (sourceId: any, targetId: any) => void;
+        isPathHighlighted?: (sourceId: any, targetId: any) => boolean;
+        copyInterfaceToClipboard?: () => void;
+        clearMultiSelection?: () => void;
+    }
+}
 import {
     initializeDOMElements,
     initializeUploadHandlers,

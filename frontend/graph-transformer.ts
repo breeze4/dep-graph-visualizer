@@ -4,17 +4,17 @@
  */
 
 // Type definitions for graph data structures
-interface NodeData {
+export interface NodeData {
     linesOfCode: number;
     imports: string[];
     importedBy: string[];
 }
 
-interface GraphData {
+export interface GraphData {
     [filePath: string]: NodeData;
 }
 
-interface GraphNode {
+export interface GraphNode {
     id: string;
     path: string;
     linesOfCode: number;

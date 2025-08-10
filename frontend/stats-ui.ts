@@ -4,6 +4,13 @@
  */
 
 import { highlightNode } from './interaction-handlers.ts';
+import { NodeData } from './graph-transformer.ts';
+import { showMainInterface } from './file-processor.ts';
+
+// Custom interface for elements with updateCount method
+interface HTMLElementWithUpdateCount extends HTMLElement {
+    updateCount?: (count: any) => void;
+}
 
 /**
  * Update graph statistics display
@@ -50,7 +57,7 @@ function updateGraphStatistics(data, filteredNodes = null) {
         });
         
         // Count total edges
-        Object.entries(graph).forEach(([filePath, nodeData]) => {
+        Object.entries(graph).forEach(([filePath, nodeData]: [string, NodeData]) => {
             if (nodesToCount.includes(filePath)) {
                 totalEdges += nodeData.imports.length;
             }
@@ -59,11 +66,11 @@ function updateGraphStatistics(data, filteredNodes = null) {
     
     // Update statistics display
     const totalItems = data.nodes ? data.nodes.length : Object.keys(data.graph).length;
-    document.getElementById('total-files').textContent = totalItems;
-    document.getElementById('total-apps').textContent = appCount;
-    document.getElementById('total-libs').textContent = libCount;
-    document.getElementById('total-edges').textContent = totalEdges;
-    document.getElementById('visible-nodes').textContent = nodesToCount.length;
+    document.getElementById('total-files').textContent = totalItems.toString();
+    document.getElementById('total-apps').textContent = appCount.toString();
+    document.getElementById('total-libs').textContent = libCount.toString();
+    document.getElementById('total-edges').textContent = totalEdges.toString();
+    document.getElementById('visible-nodes').textContent = nodesToCount.length.toString();
     
     // Update top files
     if (data.nodes && data.edges) {
@@ -260,7 +267,7 @@ function showUploadInterface() {
     document.getElementById('main-layout').style.display = 'none';
     hideAllMessages();
     // Reset file input
-    const fileInput = document.getElementById('file-input');
+    const fileInput = document.getElementById('file-input') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
 }
 
@@ -432,7 +439,7 @@ function updateMultiSelectIndicator(isActive, selectedCount = 0) {
         };
         
         // Store update function for later use
-        indicator.updateCount = updateCount;
+        (indicator as HTMLElementWithUpdateCount).updateCount = updateCount;
     }
 }
 
