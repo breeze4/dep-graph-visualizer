@@ -500,7 +500,7 @@ function setupSimulationTick(simulation, link, linkClickArea, node) {
     const simulationTime = simulationStartTime ? simulationEndTime - simulationStartTime : 0;
     console.log(`Graph simulation completed in ${simulationTime.toFixed(2)}ms with ${tickCount} ticks`);
     simulationStartTime = null;
-    tickCount = 0; // Reset tick counter for next render cycle
+    tickCount = 0; 
 
     setTimeout(() => {
       if (!performanceMode) {
