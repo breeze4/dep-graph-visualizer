@@ -26,8 +26,8 @@ Tasks to fix TypeScript compilation errors identified by `npm run typecheck`. Th
   - Add `id` property to SimulationNodeDatum
   - Add `size` property to node data type
 
-### **graph-transformer.ts**
-- [ ] Define proper type for node objects with properties (lines 74-78, 82, 93):
+### **graph-transformer.ts** ✅
+- [x] Define proper type for node objects with properties (lines 74-78, 82, 93):
   - `linesOfCode`
   - `imports`
   - `importedBy`

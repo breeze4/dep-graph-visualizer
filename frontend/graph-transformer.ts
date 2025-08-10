@@ -3,6 +3,32 @@
  * Handles transforming between different graph data formats
  */
 
+// Type definitions for graph data structures
+interface NodeData {
+    linesOfCode: number;
+    imports: string[];
+    importedBy: string[];
+}
+
+interface GraphData {
+    [filePath: string]: NodeData;
+}
+
+interface GraphNode {
+    id: string;
+    path: string;
+    linesOfCode: number;
+    imports: string[];
+    importedBy: string[];
+    incomingCount: number;
+    outgoingCount: number;
+    isApp: boolean;
+    isLib: boolean;
+    size: number;
+    color: string;
+    type: string;
+}
+
 /**
  * Transform graph data from either new spec format or legacy format into a standardized format for D3
  */
@@ -67,7 +93,7 @@ function transformGraphData(data) {
         const graph = data.graph;
         
         // Create nodes array with metadata
-        Object.entries(graph).forEach(([filePath, nodeData]) => {
+        Object.entries(graph).forEach(([filePath, nodeData]: [string, NodeData]) => {
             const node = {
                 id: filePath,
                 path: filePath,
@@ -89,7 +115,7 @@ function transformGraphData(data) {
         });
         
         // Create links array from imports
-        Object.entries(graph).forEach(([filePath, nodeData]) => {
+        Object.entries(graph).forEach(([filePath, nodeData]: [string, NodeData]) => {
             nodeData.imports.forEach(importPath => {
                 // Only create link if target exists in graph
                 if (graph[importPath]) {
