@@ -2,6 +2,7 @@
  * Tooltip Functionality Module
  * Handles creation, positioning, and management of tooltips for nodes and edges
  */
+import * as d3 from 'd3';
 
 /**
  * Show node tooltip

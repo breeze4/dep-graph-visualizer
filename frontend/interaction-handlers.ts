@@ -2,9 +2,10 @@
  * Node and Edge Interaction Handlers Module
  * Handles node selection, edge selection, drag functionality, and hover effects
  */
+import * as d3 from 'd3';
 
-import { getG, getNodes, getLinks } from './graph-renderer.js';
-import { calculateEdgeWeight } from './graph-transformer.js';
+import { getG, getNodes, getLinks } from './graph-renderer.ts';
+import { calculateEdgeWeight } from './graph-transformer.ts';
 
 /**
  * Select a node and update the info panel

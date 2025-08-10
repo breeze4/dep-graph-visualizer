@@ -10,7 +10,7 @@ import {
     initializeWindowHandlers,
     togglePanel,
     getDimensions
-} from './dom-setup.js';
+} from './dom-setup.ts';
 
 import {
     loadDefaultGraph,
@@ -23,11 +23,11 @@ import {
     handleFileSelect,
     showUploadInterface,
     showMainInterface
-} from './file-processor.js';
+} from './file-processor.ts';
 
 import {
     transformGraphData
-} from './graph-transformer.js';
+} from './graph-transformer.ts';
 
 import {
     initializeD3Visualization,
@@ -37,7 +37,7 @@ import {
     getSvg,
     getG,
     getZoom
-} from './graph-renderer.js';
+} from './graph-renderer.ts';
 
 import {
     selectNode,
@@ -45,7 +45,7 @@ import {
     createDragHandlers,
     createNodeClickHandler,
     createNodeHoverHandlers
-} from './interaction-handlers.js';
+} from './interaction-handlers.ts';
 
 import {
     toggleFocusMode,
@@ -64,14 +64,14 @@ import {
     getConnectionFocusMode,
     getFocusedConnection,
     getMultiSelectMode
-} from './focus-modes.js';
+} from './focus-modes.ts';
 
 import {
     applyFilters,
     toggleNodeLabels,
     updateMinLoc,
     resetFilters
-} from './filters.js';
+} from './filters.ts';
 
 import {
     showNodeTooltip,
@@ -79,11 +79,11 @@ import {
     showLinkTooltip,
     hideLinkTooltip,
     updateTooltipPosition
-} from './tooltips.js';
+} from './tooltips.ts';
 
 import {
     updateGraphStatistics
-} from './stats-ui.js';
+} from './stats-ui.ts';
 
 /**
  * Application state
@@ -231,15 +231,3 @@ document.addEventListener('DOMContentLoaded', function() {
     window.clearMultiSelection = clearMultiSelection;
 });
 
-/**
- * Update showMainInterface to trigger visualization initialization
- */
-const originalShowMainInterface = showMainInterface;
-showMainInterface = function() {
-    originalShowMainInterface();
-    
-    // Initialize visualization after interface is shown
-    if (window.initializeVisualizationWhenReady) {
-        window.initializeVisualizationWhenReady();
-    }
-};

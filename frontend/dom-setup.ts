@@ -2,6 +2,7 @@
  * DOM Setup and Initialization Module
  * Handles DOM element references, event listeners, and initialization
  */
+import * as d3 from 'd3';
 
 // Global DOM elements that are used across modules
 let dropZone, fileInput, browseBtn, loadingMessage, errorMessage, successMessage;
@@ -204,6 +205,10 @@ function togglePanel(panelId, buttonId) {
     }
 }
 
+// Dimension getter and setter functions
+const getDimensions = () => ({ width, height });
+const updateDimensions = (w, h) => { width = w; height = h; };
+
 // Export all functions and element references
 export {
     // DOM element references
@@ -234,6 +239,6 @@ export {
     togglePanel,
     
     // Dimension getters
-    getDimensions: () => ({ width, height }),
-    updateDimensions: (w, h) => { width = w; height = h; }
+    getDimensions,
+    updateDimensions
 };

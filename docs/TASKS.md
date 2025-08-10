@@ -137,3 +137,27 @@
 - [ ] Verify the complete multi-select workflow is intuitive and clear
 - [ ] Test that users can understand the selection purpose and process
 - [ ] Ensure all visual indicators work correctly across the workflow
+
+---
+
+## **Section 18: Add TypeScript and Vite to Frontend**
+
+### Task 18.1: Setup package.json and configurations
+- [x] Create package.json with TypeScript and Vite dependencies
+- [x] Create TypeScript configuration (tsconfig.json)  
+- [x] Create Vite configuration (vite.config.ts)
+
+### Task 18.2: File system changes
+- [x] Rename all .js files to .ts files
+- [x] Update index.html to work with Vite (remove CDN D3, update script imports)
+- [x] Update .gitignore for TypeScript/Vite outputs
+
+### Task 18.3: Install and test
+- [x] Install dependencies with npm install
+- [x] Test that Vite dev server runs successfully  
+- [x] Test that Vite build works successfully
+
+**Notes for Section 18:**
+- Do not add type annotations or convert code to TypeScript features yet
+- Focus only on infrastructure setup and file renaming
+- Ensure all existing functionality continues to work

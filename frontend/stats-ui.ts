@@ -3,7 +3,7 @@
  * Handles graph statistics calculation, UI updates, and state management
  */
 
-import { highlightNode } from './interaction-handlers.js';
+import { highlightNode } from './interaction-handlers.ts';
 
 /**
  * Update graph statistics display
@@ -262,11 +262,6 @@ function showUploadInterface() {
     // Reset file input
     const fileInput = document.getElementById('file-input');
     if (fileInput) fileInput.value = '';
-}
-
-function showMainInterface() {
-    document.getElementById('upload-section').style.display = 'none';
-    document.getElementById('main-layout').style.display = 'block';
 }
 
 /**

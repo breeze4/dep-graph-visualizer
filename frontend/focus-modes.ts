@@ -2,9 +2,10 @@
  * Focus Mode and Selection Features Module
  * Handles focus modes, multi-selection, interface extraction, and connection focus
  */
+import * as d3 from 'd3';
 
-import { getG, getNodes } from './graph-renderer.js';
-import { selectNode } from './interaction-handlers.js';
+import { getG, getNodes } from './graph-renderer.ts';
+import { selectNode } from './interaction-handlers.ts';
 
 // Focus mode state
 let focusMode = false;
@@ -543,6 +544,19 @@ function updateAllEdgeButtons() {
     });
 }
 
+// State getter functions
+const getFocusMode = () => focusMode;
+const getFocusedNode = () => focusedNode;
+const getConnectionFocusMode = () => connectionFocusMode;
+const getFocusedConnection = () => focusedConnection;
+const getMultiSelectMode = () => multiSelectMode;
+const getSelectedNodes = () => selectedNodes;
+const getIsShiftPressed = () => isShiftPressed;
+
+// State setter functions
+const setMultiSelectMode = (value) => { multiSelectMode = value; };
+const setIsShiftPressed = (value) => { isShiftPressed = value; };
+
 export {
     // Focus mode functions
     toggleFocusMode,
@@ -571,15 +585,15 @@ export {
     updateAllEdgeButtons,
     
     // State getters
-    getFocusMode: () => focusMode,
-    getFocusedNode: () => focusedNode,
-    getConnectionFocusMode: () => connectionFocusMode,
-    getFocusedConnection: () => focusedConnection,
-    getMultiSelectMode: () => multiSelectMode,
-    getSelectedNodes: () => selectedNodes,
-    getIsShiftPressed: () => isShiftPressed,
+    getFocusMode,
+    getFocusedNode,
+    getConnectionFocusMode,
+    getFocusedConnection,
+    getMultiSelectMode,
+    getSelectedNodes,
+    getIsShiftPressed,
     
     // State setters (for keyboard handlers)
-    setMultiSelectMode: (value) => { multiSelectMode = value; },
-    setIsShiftPressed: (value) => { isShiftPressed = value; }
+    setMultiSelectMode,
+    setIsShiftPressed
 };

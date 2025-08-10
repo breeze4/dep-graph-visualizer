@@ -2,11 +2,12 @@
  * Filtering and Search Functionality Module
  * Handles graph filtering, search highlighting, and filter controls
  */
+import * as d3 from 'd3';
 
-import { getG } from './graph-renderer.js';
-import { clearSearchHighlight } from './interaction-handlers.js';
-import { exitFocusMode, exitConnectionFocus, clearAllHighlights } from './focus-modes.js';
-import { debounce } from './dom-setup.js';
+import { getG } from './graph-renderer.ts';
+import { clearSearchHighlight } from './interaction-handlers.ts';
+import { exitFocusMode, exitConnectionFocus, clearAllHighlights } from './focus-modes.ts';
+import { debounce } from './dom-setup.ts';
 
 /**
  * Apply filters to the graph

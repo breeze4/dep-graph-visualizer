@@ -75,6 +75,13 @@ jspm_packages/
 # DynamoDB Local files
 .dynamodb/
 
+# TypeScript
+*.tsbuildinfo
+
+# Vite
+frontend/dist/
+frontend/.vite/
+
 # OS generated files
 .DS_Store
 .DS_Store?

@@ -42,13 +42,17 @@ During development:
 * No dynamic graph generation - uses pre-generated JSON from CLI tool
 * Configurable port (default `3000`)
 
-### **Frontend (Vanilla JS + D3.js)**
+### **Frontend (TypeScript + Vite + D3.js)**
 
-* Renders an interactive graph.
+* Built with TypeScript for type safety and better developer experience
+* Uses Vite for fast development server and optimized builds
+* Renders an interactive graph using D3.js
 * Supports **multi-level zoom** and **focus modes**.
 * Displays detail panels for nodes and edges.
 * Allows selection and grouping for **interface extraction**.
-* Entry point: `index.html`.
+* Entry point: `index.html` served via Vite dev server
+* Development: `npm run dev` 
+* Production build: `npm run build`
 
 ---
 

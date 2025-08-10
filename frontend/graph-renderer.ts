@@ -2,9 +2,10 @@
  * D3 Visualization and Rendering Module
  * Handles D3 setup, force simulation, and graph rendering
  */
+import * as d3 from 'd3';
 
-import { transformGraphData, calculateEdgeWeight } from './graph-transformer.js';
-import { getDimensions } from './dom-setup.js';
+import { transformGraphData, calculateEdgeWeight } from './graph-transformer.ts';
+import { getDimensions } from './dom-setup.ts';
 
 // D3 visualization variables
 let svg, g, zoom, currentSimulation;
@@ -529,6 +530,14 @@ function resetGraphView(svg, zoom, g) {
         .attr('stroke-width', d => d.thickness || calculateEdgeWeight(d));
 }
 
+// Getter functions for module state
+const getCurrentSimulation = () => currentSimulation;
+const getSvg = () => svg;
+const getG = () => g;
+const getZoom = () => zoom;
+const getNodes = () => nodes;
+const getLinks = () => links;
+
 export {
     initializeD3Visualization,
     renderGraph,
@@ -537,10 +546,10 @@ export {
     showPerformanceIndicator,
     
     // Getters for module state
-    getCurrentSimulation: () => currentSimulation,
-    getSvg: () => svg,
-    getG: () => g,
-    getZoom: () => zoom,
-    getNodes: () => nodes,
-    getLinks: () => links
+    getCurrentSimulation,
+    getSvg,
+    getG,
+    getZoom,
+    getNodes,
+    getLinks
 };

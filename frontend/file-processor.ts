@@ -12,7 +12,7 @@ import {
     uploadSection,
     mainLayout,
     fileInput
-} from './dom-setup.js';
+} from './dom-setup.ts';
 
 // Global cache for parsed graph data
 let graphDataCache = new Map();
@@ -396,6 +396,11 @@ function showUploadInterface() {
 function showMainInterface() {
     uploadSection.style.display = 'none';
     mainLayout.style.display = 'block';
+    
+    // Initialize visualization after interface is shown
+    if (window.initializeVisualizationWhenReady) {
+        window.initializeVisualizationWhenReady();
+    }
 }
 
 // Export all functions
