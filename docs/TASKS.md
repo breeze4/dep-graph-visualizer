@@ -56,10 +56,16 @@
 
 ## Task 5: Fix graph rendering log that keeps growing
 
-- [ ] Locate the `console.log('Graph rendering completed...')` in graph-renderer.ts:448
-- [ ] Identify why the tick count keeps growing (likely simulation not being properly reset)
-- [ ] Add proper cleanup of previous simulation before creating new one
-- [ ] Reset tick counter to 0 when starting a new rendering cycle
-- [ ] Ensure simulation.stop() is called on old simulations
-- [ ] Add simulation state management to prevent multiple concurrent simulations
-- [ ] Test that the rendering time and tick count reset properly between renders
+- [x] Locate the `console.log('Graph rendering completed...')` in graph-renderer.ts:448
+- [x] Identify why the tick count keeps growing (likely simulation not being properly reset)
+- [x] Add proper cleanup of previous simulation before creating new one
+- [x] Reset tick counter to 0 when starting a new rendering cycle
+- [x] Ensure simulation.stop() is called on old simulations
+- [x] Add simulation state management to prevent multiple concurrent simulations
+- [x] Test that the rendering time and tick count reset properly between renders
+
+## Task 6: Fix graph rendering log to track simulation start/end time
+
+- [x] Modify graph-renderer.ts to track simulation start time instead of overall render start time
+- [x] Update the 'Graph rendering completed' log to show simulation duration instead of total render time  
+- [x] Run build and typecheck to verify changes

@@ -87,7 +87,12 @@ function renderGraph(
   showLinkTooltip,
   hideLinkTooltip
 ) {
-  const startTime = performance.now();
+  // Stop and cleanup previous simulation to prevent tick count accumulation
+  if (currentSimulation) {
+    currentSimulation.stop();
+    currentSimulation = null;
+  }
+
   console.log(
     `Rendering graph with ${graphData.nodes.length} nodes and ${graphData.links.length} edges`
   );
@@ -134,7 +139,7 @@ function renderGraph(
   currentSimulation = createForceSimulation(nodes, links, nodeCount, edgeCount);
 
   // Update positions on each tick
-  setupSimulationTick(currentSimulation, link, linkClickArea, node, startTime);
+  setupSimulationTick(currentSimulation, link, linkClickArea, node);
 
   return { currentSimulation };
 }
@@ -440,10 +445,16 @@ function createForceSimulation(nodes, links, nodeCount, edgeCount) {
 /**
  * Setup simulation tick handler
  */
-function setupSimulationTick(simulation, link, linkClickArea, node, startTime) {
+function setupSimulationTick(simulation, link, linkClickArea, node) {
+  // Reset tick counter for this render cycle only
   let tickCount = 0;
+  // Track simulation start time when first tick begins
+  let simulationStartTime = null;
 
   simulation.on('tick', () => {
+    if (simulationStartTime === null) {
+      simulationStartTime = performance.now();
+    }
     tickCount++;
 
     if (performanceMode) {
@@ -485,9 +496,11 @@ function setupSimulationTick(simulation, link, linkClickArea, node, startTime) {
 
   // Handle label collisions after simulation stabilizes
   simulation.on('end', () => {
-    const endTime = performance.now();
-    const renderTime = endTime - startTime;
-    console.log(`Graph rendering completed in ${renderTime.toFixed(2)}ms with ${tickCount} ticks`);
+    const simulationEndTime = performance.now();
+    const simulationTime = simulationStartTime ? simulationEndTime - simulationStartTime : 0;
+    console.log(`Graph simulation completed in ${simulationTime.toFixed(2)}ms with ${tickCount} ticks`);
+    simulationStartTime = null;
+    tickCount = 0; // Reset tick counter for next render cycle
 
     setTimeout(() => {
       if (!performanceMode) {
