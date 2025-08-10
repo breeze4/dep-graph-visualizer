@@ -6,6 +6,7 @@ import * as d3 from 'd3';
 
 import { getG, getNodes } from './graph-renderer.ts';
 import { selectNode } from './interaction-handlers.ts';
+import { GraphNode, GraphLink, D3SimulationNode, D3SimulationLink } from './graph-transformer.ts';
 
 // Custom interface for elements with updateCount method
 interface ElementWithUpdateCount extends Element {
@@ -63,10 +64,14 @@ function enterFocusMode(nodeId) {
         .transition()
         .duration(500)
         .ease(d3.easeQuadInOut)
-        .style('opacity', d => connectedNodeIds.has(d.id) ? 1 : 0.1)
+        .style('opacity', d => {
+            const nodeData = d as GraphNode;
+            return connectedNodeIds.has(nodeData.id) ? 1 : 0.1;
+        })
         .on('end', function(d) {
             // Disable pointer events after transition
-            d3.select(this).style('pointer-events', connectedNodeIds.has(d.id) ? 'all' : 'none');
+            const nodeData = d as GraphNode;
+            d3.select(this).style('pointer-events', connectedNodeIds.has(nodeData.id) ? 'all' : 'none');
         });
     
     // Smooth transition for hiding non-connected edges
@@ -74,10 +79,14 @@ function enterFocusMode(nodeId) {
         .transition()
         .duration(500)
         .ease(d3.easeQuadInOut)
-        .style('opacity', d => connectedNodeIds.has(d.source.id) && connectedNodeIds.has(d.target.id) ? 0.7 : 0.05)
+        .style('opacity', d => {
+            const linkData = d as D3SimulationLink;
+            return connectedNodeIds.has(linkData.source.id) && connectedNodeIds.has(linkData.target.id) ? 0.7 : 0.05;
+        })
         .on('end', function(d) {
             // Disable pointer events after transition
-            const isConnected = connectedNodeIds.has(d.source.id) && connectedNodeIds.has(d.target.id);
+            const linkData = d as D3SimulationLink;
+            const isConnected = connectedNodeIds.has(linkData.source.id) && connectedNodeIds.has(linkData.target.id);
             d3.select(this).style('pointer-events', isConnected ? 'all' : 'none');
         });
     
@@ -156,13 +165,15 @@ function updateMultiSelectionVisual() {
         .duration(200)
         .ease(d3.easeQuadOut)
         .attr('stroke', d => {
-            if (selectedNodes.has(d.id)) {
+            const nodeData = d as GraphNode;
+            if (selectedNodes.has(nodeData.id)) {
                 return '#e74c3c'; // Selected color
             }
             return '#fff'; // Default color
         })
         .attr('stroke-width', d => {
-            if (selectedNodes.has(d.id)) {
+            const nodeData = d as GraphNode;
+            if (selectedNodes.has(nodeData.id)) {
                 return 4; // Thicker border for selected
             }
             return 2; // Default width
@@ -401,13 +412,19 @@ function highlightPath(sourceId, targetId) {
         .transition()
         .duration(300)
         .ease(d3.easeQuadOut)
-        .attr('stroke-opacity', d => (d.source.id === sourceId && d.target.id === targetId) ? 0.9 : 0.2);
+        .attr('stroke-opacity', d => {
+            const linkData = d as D3SimulationLink;
+            return (linkData.source.id === sourceId && linkData.target.id === targetId) ? 0.9 : 0.2;
+        });
     
     g.selectAll('.node circle')
         .transition()
         .duration(300)
         .ease(d3.easeQuadOut)
-        .attr('opacity', d => (d.id === sourceId || d.id === targetId) ? 1 : 0.3);
+        .attr('opacity', d => {
+            const nodeData = d as GraphNode;
+            return (nodeData.id === sourceId || nodeData.id === targetId) ? 1 : 0.3;
+        });
 }
 
 function toggleConnectionFocus(sourceId, targetId) {
@@ -439,18 +456,18 @@ function enterConnectionFocus(sourceId, targetId) {
         .transition()
         .duration(500)
         .ease(d3.easeQuadInOut)
-        .style('opacity', d => connectedNodeIds.has(d.id) ? 1 : 0.1)
+        .style('opacity', d => connectedNodeIds.has((d as GraphNode).id) ? 1 : 0.1)
         .on('end', function(d) {
-            d3.select(this).style('pointer-events', connectedNodeIds.has(d.id) ? 'all' : 'none');
+            d3.select(this).style('pointer-events', connectedNodeIds.has((d as GraphNode).id) ? 'all' : 'none');
         });
     
     g.selectAll('.link')
         .transition()
         .duration(500)
         .ease(d3.easeQuadInOut)
-        .style('opacity', d => connectedNodeIds.has(d.source.id) && connectedNodeIds.has(d.target.id) ? 0.7 : 0.05)
+        .style('opacity', d => connectedNodeIds.has((d as D3SimulationLink).source.id) && connectedNodeIds.has((d as D3SimulationLink).target.id) ? 0.7 : 0.05)
         .on('end', function(d) {
-            const isConnected = connectedNodeIds.has(d.source.id) && connectedNodeIds.has(d.target.id);
+            const isConnected = connectedNodeIds.has((d as D3SimulationLink).source.id) && connectedNodeIds.has((d as D3SimulationLink).target.id);
             d3.select(this).style('pointer-events', isConnected ? 'all' : 'none');
         });
 }

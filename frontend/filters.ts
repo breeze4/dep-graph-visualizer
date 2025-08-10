@@ -8,6 +8,7 @@ import { getG } from './graph-renderer.ts';
 import { clearSearchHighlight } from './interaction-handlers.ts';
 import { exitFocusMode, exitConnectionFocus, clearAllHighlights, getFocusMode, getConnectionFocusMode } from './focus-modes.ts';
 import { debounce } from './dom-setup.ts';
+import { GraphNode, GraphLink, D3SimulationNode, D3SimulationLink } from './graph-transformer.ts';
 
 /**
  * Apply filters to the graph
@@ -68,11 +69,13 @@ function applyFilters(currentGraphData, updateGraphStatistics) {
         .duration(300)
         .ease(d3.easeQuadOut)
         .style('opacity', d => {
-            const isVisible = filteredNodes.includes(d.id);
+            const nodeData = d as GraphNode;
+            const isVisible = filteredNodes.includes(nodeData.id);
             return isVisible ? 1 : 0.1;
         })
         .style('pointer-events', d => {
-            const isVisible = filteredNodes.includes(d.id);
+            const nodeData = d as GraphNode;
+            const isVisible = filteredNodes.includes(nodeData.id);
             return isVisible ? 'all' : 'none';
         });
     
@@ -82,13 +85,15 @@ function applyFilters(currentGraphData, updateGraphStatistics) {
         .duration(300)
         .ease(d3.easeQuadOut)
         .style('opacity', d => {
-            const sourceVisible = filteredNodes.includes(d.source.id);
-            const targetVisible = filteredNodes.includes(d.target.id);
+            const linkData = d as D3SimulationLink;
+            const sourceVisible = filteredNodes.includes(linkData.source.id);
+            const targetVisible = filteredNodes.includes(linkData.target.id);
             return sourceVisible && targetVisible ? 0.7 : 0.05;
         })
         .style('pointer-events', d => {
-            const sourceVisible = filteredNodes.includes(d.source.id);
-            const targetVisible = filteredNodes.includes(d.target.id);
+            const linkData = d as D3SimulationLink;
+            const sourceVisible = filteredNodes.includes(linkData.source.id);
+            const targetVisible = filteredNodes.includes(linkData.target.id);
             return sourceVisible && targetVisible ? 'all' : 'none';
         });
     
@@ -99,13 +104,15 @@ function applyFilters(currentGraphData, updateGraphStatistics) {
             .duration(300)
             .ease(d3.easeQuadOut)
             .style('opacity', d => {
-                const sourceVisible = filteredNodes.includes(d.source.id);
-                const targetVisible = filteredNodes.includes(d.target.id);
+                const linkData = d as D3SimulationLink;
+                const sourceVisible = filteredNodes.includes(linkData.source.id);
+                const targetVisible = filteredNodes.includes(linkData.target.id);
                 return sourceVisible && targetVisible ? 1 : 0;
             })
             .style('pointer-events', d => {
-                const sourceVisible = filteredNodes.includes(d.source.id);
-                const targetVisible = filteredNodes.includes(d.target.id);
+                const linkData = d as D3SimulationLink;
+                const sourceVisible = filteredNodes.includes(linkData.source.id);
+                const targetVisible = filteredNodes.includes(linkData.target.id);
                 return sourceVisible && targetVisible ? 'all' : 'none';
             });
     }
@@ -133,15 +140,17 @@ function highlightSearchResultsInFiltered(searchTerm, visibleNodes) {
         .duration(200)
         .ease(d3.easeQuadOut)
         .attr('stroke', d => {
-            if (!visibleNodes.includes(d.id)) return '#fff';
-            const fileName = d.id.split('/').pop().toLowerCase();
-            const matches = fileName.includes(searchTerm) || d.id.toLowerCase().includes(searchTerm);
+            const nodeData = d as GraphNode;
+            if (!visibleNodes.includes(nodeData.id)) return '#fff';
+            const fileName = nodeData.id.split('/').pop().toLowerCase();
+            const matches = fileName.includes(searchTerm) || nodeData.id.toLowerCase().includes(searchTerm);
             return matches ? '#e74c3c' : '#fff';
         })
         .attr('stroke-width', d => {
-            if (!visibleNodes.includes(d.id)) return 2;
-            const fileName = d.id.split('/').pop().toLowerCase();
-            const matches = fileName.includes(searchTerm) || d.id.toLowerCase().includes(searchTerm);
+            const nodeData = d as GraphNode;
+            if (!visibleNodes.includes(nodeData.id)) return 2;
+            const fileName = nodeData.id.split('/').pop().toLowerCase();
+            const matches = fileName.includes(searchTerm) || nodeData.id.toLowerCase().includes(searchTerm);
             return matches ? 4 : 2;
         });
 }
@@ -232,14 +241,16 @@ function applyFiltersLegacy(currentGraphData, updateGraphStatistics) {
     
     // Update node visibility
     g.selectAll('.node').style('display', d => {
-        const isVisible = filteredNodes.includes(d.id);
+        const nodeData = d as GraphNode;
+        const isVisible = filteredNodes.includes(nodeData.id);
         return isVisible ? 'block' : 'none';
     });
     
     // Update link visibility (only show links between visible nodes)
     g.selectAll('.link').style('display', d => {
-        const sourceVisible = filteredNodes.includes(d.source.id);
-        const targetVisible = filteredNodes.includes(d.target.id);
+        const linkData = d as D3SimulationLink;
+        const sourceVisible = filteredNodes.includes(linkData.source.id);
+        const targetVisible = filteredNodes.includes(linkData.target.id);
         return sourceVisible && targetVisible ? 'block' : 'none';
     });
     

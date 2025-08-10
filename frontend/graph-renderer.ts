@@ -6,6 +6,7 @@ import * as d3 from 'd3';
 
 import { transformGraphData, calculateEdgeWeight, GraphNode } from './graph-transformer.ts';
 import { getDimensions } from './dom-setup.ts';
+import { deselectAllNodes } from './interaction-handlers.ts';
 import { SimulationNodeDatum, SimulationLinkDatum } from 'd3';
 
 // Extended interfaces for D3 simulation with our custom properties
@@ -39,7 +40,7 @@ function initializeD3Visualization(currentGraphData) {
         .attr('viewBox', `0 0 ${width} ${height}`);
     
     // Create zoom behavior
-    zoom = d3.zoom()
+    zoom = d3.zoom<SVGSVGElement, unknown>()
         .scaleExtent([0.1, 4])
         .on('zoom', function(event) {
             g.attr('transform', event.transform);
@@ -58,16 +59,16 @@ function initializeD3Visualization(currentGraphData) {
         .attr('height', height)
         .attr('fill', 'transparent')
         .attr('pointer-events', 'all')
-        .on('click', function(event, deselectAllNodes) {
+        .on('click', function(event) {
             // Deselect nodes when clicking empty space
             event.stopPropagation();
-            if (deselectAllNodes) deselectAllNodes();
+            deselectAllNodes();
         });
     
     // Transform graph data and render
     if (currentGraphData) {
         const graphData = transformGraphData(currentGraphData);
-        renderGraph(graphData);
+        renderGraph(graphData, null, null, null, null, null, null);
     }
     
     return { svg, g, zoom, currentSimulation };
@@ -347,17 +348,17 @@ function createForceSimulation(nodes, links, nodeCount, edgeCount) {
     const alphaDecay = performanceMode ? 0.05 : 0.02;
     const velocityDecay = performanceMode ? 0.4 : 0.3;
     
-    return d3.forceSimulation(nodes)
+    return d3.forceSimulation(nodes as SimulationNode[])
         .force('link', d3.forceLink(links)
-            .id(d => d.id)
+            .id(d => (d as SimulationNode).id)
             .distance(d => {
                 if (performanceMode) {
                     // Simplified distance calculation for performance
                     return 50;
                 }
                 // Adjust distance based on node sizes
-                const sourceSize = d.source.size || 20;
-                const targetSize = d.target.size || 20;
+                const sourceSize = (d.source as SimulationNode).size || 20;
+                const targetSize = (d.target as SimulationNode).size || 20;
                 return Math.max(80, (sourceSize + targetSize) * 1.5);
             })
             .strength(linkStrength)
@@ -369,13 +370,13 @@ function createForceSimulation(nodes, links, nodeCount, edgeCount) {
                     return chargeStrength;
                 }
                 // Stronger repulsion for larger nodes
-                return chargeStrength - (d.size * 5);
+                return chargeStrength - ((d as SimulationNode).size * 5);
             })
             .distanceMax(performanceMode ? 200 : 300)
         )
         .force('center', d3.forceCenter(width / 2, height / 2))
         .force('collision', d3.forceCollide()
-            .radius(d => d.size + (performanceMode ? 4 : 8))
+            .radius(d => (d as SimulationNode).size + (performanceMode ? 4 : 8))
             .strength(performanceMode ? 0.5 : 0.8)
         )
         .force('x', d3.forceX(width / 2).strength(0.05))
@@ -446,8 +447,8 @@ function handleLabelCollisions() {
     
     const labels = g.selectAll('.node-label').nodes();
     const labelData = labels.map(label => {
-        const bbox = label.getBBox();
-        const transform = d3.select(label.parentNode).attr('transform');
+        const bbox = (label as SVGTextElement).getBBox();
+        const transform = d3.select((label as Element).parentNode as Element).attr('transform');
         const translate = transform ? transform.match(/translate\(([^,]+),([^)]+)\)/) : null;
         
         return {
@@ -476,8 +477,8 @@ function handleLabelCollisions() {
         }
         
         // Hide labels that would collide (keep larger nodes visible)
-        const parentNode = d3.select(labelData[i].element.parentNode);
-        const nodeSize = parentNode.datum().size;
+        const parentNode = d3.select((labelData[i].element as Element).parentNode as Element);
+        const nodeSize = (parentNode.datum() as SimulationNode).size;
         
         if (hasCollision && nodeSize < 20) {
             d3.select(labelData[i].element).style('display', 'none');

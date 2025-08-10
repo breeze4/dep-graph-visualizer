@@ -5,7 +5,7 @@
 import * as d3 from 'd3';
 
 import { getG, getNodes, getLinks } from './graph-renderer.ts';
-import { calculateEdgeWeight } from './graph-transformer.ts';
+import { calculateEdgeWeight, GraphNode, D3SimulationLink } from './graph-transformer.ts';
 
 /**
  * Select a node and update the info panel
@@ -57,7 +57,7 @@ function selectNode(nodeData, focusMode, focusedNode) {
             .attr('stroke-width', 2);
         
         g.selectAll('.node')
-            .filter(d => d.id === nodeData.id)
+            .filter(d => (d as GraphNode).id === nodeData.id)
             .select('circle')
             .transition()
             .duration(300)
@@ -127,16 +127,16 @@ function selectEdge(edgeData, performanceMode, isPathHighlighted, connectionFocu
         .duration(300)
         .ease(d3.easeQuadOut)
         .attr('stroke-opacity', d => d === edgeData ? 0.9 : 0.3)
-        .attr('stroke-width', d => d === edgeData ? Math.max(4, (d.thickness || calculateEdgeWeight(d)) * 1.8) : (d.thickness || calculateEdgeWeight(d)));
+        .attr('stroke-width', d => d === edgeData ? Math.max(4, ((d as D3SimulationLink).thickness || calculateEdgeWeight(d)) * 1.8) : ((d as D3SimulationLink).thickness || calculateEdgeWeight(d)));
     
     // Highlight connected nodes
     g.selectAll('.node circle')
         .transition()
         .duration(300)
         .ease(d3.easeQuadOut)
-        .attr('stroke', d => (d.id === edgeData.source.id || d.id === edgeData.target.id) ? '#e74c3c' : '#fff')
-        .attr('stroke-width', d => (d.id === edgeData.source.id || d.id === edgeData.target.id) ? 4 : 2)
-        .attr('opacity', d => (d.id === edgeData.source.id || d.id === edgeData.target.id) ? 1 : 0.6);
+        .attr('stroke', d => ((d as GraphNode).id === (edgeData.source as GraphNode).id || (d as GraphNode).id === (edgeData.target as GraphNode).id) ? '#e74c3c' : '#fff')
+        .attr('stroke-width', d => ((d as GraphNode).id === (edgeData.source as GraphNode).id || (d as GraphNode).id === (edgeData.target as GraphNode).id) ? 4 : 2)
+        .attr('opacity', d => ((d as GraphNode).id === (edgeData.source as GraphNode).id || (d as GraphNode).id === (edgeData.target as GraphNode).id) ? 1 : 0.6);
 }
 
 /**
@@ -196,11 +196,11 @@ function createNodeHoverHandlers(showNodeTooltip, hideNodeTooltip) {
         g.selectAll('.link')
             .attr('stroke-opacity', linkData => {
                 // Check if this edge is connected to the hovered node
-                const isConnected = linkData.source.id === d.id || linkData.target.id === d.id;
+                const isConnected = (linkData as D3SimulationLink).source.id === d.id || (linkData as D3SimulationLink).target.id === d.id;
                 return isConnected ? 0.9 : 0.2;
             })
             .attr('stroke-width', linkData => {
-                const isConnected = linkData.source.id === d.id || linkData.target.id === d.id;
+                const isConnected = (linkData as D3SimulationLink).source.id === d.id || (linkData as D3SimulationLink).target.id === d.id;
                 if (isConnected) {
                     return Math.max(2.5, calculateEdgeWeight(linkData) * 1.3);
                 }
@@ -211,9 +211,9 @@ function createNodeHoverHandlers(showNodeTooltip, hideNodeTooltip) {
         g.selectAll('.node').select('circle')
             .attr('opacity', nodeData => {
                 // Keep full opacity for hovered node and connected nodes
-                if (nodeData.id === d.id) return 1;
-                const isConnected = d.imports.includes(nodeData.id) || 
-                                  d.importedBy.includes(nodeData.id);
+                if ((nodeData as GraphNode).id === d.id) return 1;
+                const isConnected = d.imports.includes((nodeData as GraphNode).id) || 
+                                  d.importedBy.includes((nodeData as GraphNode).id);
                 return isConnected ? 1 : 0.3;
             });
         
@@ -227,7 +227,7 @@ function createNodeHoverHandlers(showNodeTooltip, hideNodeTooltip) {
         // Reset edge styling
         g.selectAll('.link')
             .attr('stroke-opacity', 0.7)
-            .attr('stroke-width', linkData => linkData.thickness || calculateEdgeWeight(linkData));
+            .attr('stroke-width', linkData => (linkData as D3SimulationLink).thickness || calculateEdgeWeight(linkData));
         
         // Reset node opacity
         g.selectAll('.node').select('circle')
@@ -235,7 +235,7 @@ function createNodeHoverHandlers(showNodeTooltip, hideNodeTooltip) {
         
         // Reset node styling (unless selected)
         const isSelected = g.selectAll('.node')
-            .filter(n => n.id === d.id)
+            .filter(n => (n as GraphNode).id === d.id)
             .select('circle')
             .attr('stroke') === '#e74c3c';
         
@@ -280,7 +280,7 @@ function highlightNode(filePath) {
     
     // Highlight the specific node
     g.selectAll('.node')
-        .filter(d => d.id === filePath)
+        .filter(d => (d as GraphNode).id === filePath)
         .select('circle')
         .attr('stroke', '#e74c3c')
         .attr('stroke-width', 4);
@@ -312,13 +312,13 @@ function highlightSearchResults(searchTerm) {
     const g = getG();
     g.selectAll('.node circle')
         .attr('stroke', d => {
-            const fileName = d.path.split('/').pop().toLowerCase();
-            const matches = fileName.includes(searchTerm) || d.path.toLowerCase().includes(searchTerm);
+            const fileName = (d as GraphNode).path.split('/').pop().toLowerCase();
+            const matches = fileName.includes(searchTerm) || (d as GraphNode).path.toLowerCase().includes(searchTerm);
             return matches ? '#e74c3c' : '#fff';
         })
         .attr('stroke-width', d => {
-            const fileName = d.path.split('/').pop().toLowerCase();
-            const matches = fileName.includes(searchTerm) || d.path.toLowerCase().includes(searchTerm);
+            const fileName = (d as GraphNode).path.split('/').pop().toLowerCase();
+            const matches = fileName.includes(searchTerm) || (d as GraphNode).path.toLowerCase().includes(searchTerm);
             return matches ? 4 : 2;
         });
 }

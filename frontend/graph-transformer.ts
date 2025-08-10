@@ -27,6 +27,33 @@ export interface GraphNode {
     size: number;
     color: string;
     type: string;
+    name?: string; // Short name for display
+    isExternal?: boolean;
+    fileCount?: number;
+}
+
+export interface GraphLink {
+    source: string | GraphNode;
+    target: string | GraphNode;
+    count?: number;
+    symbols?: string[];
+    thickness?: number;
+}
+
+export interface D3SimulationNode extends GraphNode {
+    x?: number;
+    y?: number;
+    vx?: number;
+    vy?: number;
+    fx?: number | null;
+    fy?: number | null;
+    index?: number;
+}
+
+export interface D3SimulationLink extends GraphLink {
+    source: D3SimulationNode;
+    target: D3SimulationNode;
+    index?: number;
 }
 
 /**
